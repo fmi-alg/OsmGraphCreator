@@ -1,0 +1,6 @@
+[submodule "vendor/osmpbf"]
+	path = vendor/osmpbf
+	url = git://git.funroll-loops.de/osmpbf.git
+[submodule "vendor/sserialize"]
+	path = vendor/sserialize
+	url = git://git.funroll-loops.de/sserialize.git

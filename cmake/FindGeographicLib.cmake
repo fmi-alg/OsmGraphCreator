@@ -1,0 +1,34 @@
+# Look for GeographicLib
+#
+# Set
+#  GEOGRAPHICLIB_FOUND = TRUE
+#  GeographicLib_INCLUDE_DIRS = /usr/local/include
+#  GeographicLib_LIBRARIES = /usr/local/lib/libGeographic.so
+#  GeographicLib_LIBRARY_DIRS = /usr/local/lib
+
+FIND_PATH(GeographicLib_INCLUDE_DIR GeographicLib/Geodesic.hpp /usr/local/include /usr/include)
+
+find_library (GeographicLib_LIBRARIES Geographic
+				${GeographicLib_INCLUDE_DIR}/../lib
+				/usr/local/lib
+				/usr/lib)
+
+if (GeographicLib_LIBRARIES)
+  get_filename_component (GeographicLib_LIBRARY_DIRS
+    "${GeographicLib_LIBRARIES}" PATH)
+  get_filename_component (GEOGRAPHICLIB_ROOT_DIR
+    "${GeographicLib_LIBRARY_DIRS}" PATH)
+  set (GeographicLib_INCLUDE_DIRS "${GEOGRAPHICLIB_ROOT_DIR}/include")
+  unset (GEOGRAPHICLIB_ROOT_DIR)
+  if (NOT EXISTS "${GeographicLib_INCLUDE_DIRS}/GeographicLib/Config.h")
+    unset (GeographicLib_INCLUDE_DIRS)
+    unset (GeographicLib_LIBRARIES)
+    unset (GeographicLib_LIBRARY_DIRS)
+  endif ()
+endif ()
+
+include (FindPackageHandleStandardArgs)
+find_package_handle_standard_args (GeographicLib DEFAULT_MSG
+  GeographicLib_LIBRARY_DIRS GeographicLib_LIBRARIES GeographicLib_INCLUDE_DIRS)
+mark_as_advanced (GeographicLib_LIBRARY_DIRS GeographicLib_LIBRARIES
+  GeographicLib_INCLUDE_DIRS)
