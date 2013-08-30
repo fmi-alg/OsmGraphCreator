@@ -48,10 +48,20 @@ namespace osm {
 namespace graphtools {
 namespace creator {
 
+// # Id : [hexstring]
+// # Timestamp : [int]
+// # Type: standard
+// # Revision: 1
+
+
 FmiTextGraphWriter::FmiTextGraphWriter(std::ostream & out) :  m_out(out) {}
 FmiTextGraphWriter::~FmiTextGraphWriter(){}
 
 void FmiTextGraphWriter::writeHeader(uint64_t nodeCount, uint64_t edgeCount) {
+	out() << "Id : 0" << std::endl;
+	out() << "Timestamp : " << time(0) << std::endl;
+	out() << "Type : standard" << std::endl;
+	out() << "Revision: 1 " << std::endl;
 	out() << nodeCount << std::endl;
 	out() << edgeCount << std::endl;
 }
@@ -99,6 +109,10 @@ void FmiBinaryGraphWriter::putDouble(double v) {
 }
 
 void FmiBinaryGraphWriter::writeHeader(uint64_t nodeCount, uint64_t edgeCount) {
+	out() << "Id : 0" << std::endl;
+	out() << "Timestamp : " << time(0) << std::endl;
+	out() << "Type : maxspeed" << std::endl;
+	out() << "Revision: 1 " << std::endl;
 	putInt(nodeCount);
 	putInt(edgeCount);
 }
