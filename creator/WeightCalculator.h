@@ -8,20 +8,32 @@ namespace graphtools {
 namespace creator {
 
 struct WeightCalculator {
-	virtual int calc(const Coordinates & src, const Coordinates & dest, int type) = 0;
+	virtual int calc(const Edge & edge) = 0;
 };
 
 struct NoWeightCalculator: public WeightCalculator {
-	virtual int calc(const Coordinates & src, const Coordinates & dest, int type);
+	virtual int calc(const Edge & edges);
 };
 
 struct GeodesicDistanceWeightCalculator: public WeightCalculator {
-	virtual int calc(const Coordinates & src, const Coordinates & dest, int type);
+	GeodesicDistanceWeightCalculator(StatePtr state) : state(state)  {}
+	StatePtr state;
+	virtual int calc(const Edge & edge);
 };
 
 struct WeightedGeodesicDistanceWeightCalculator: public WeightCalculator {
+	WeightedGeodesicDistanceWeightCalculator(StatePtr state) : state(state)  {}
+	StatePtr state;
 	std::shared_ptr< std::unordered_map<int, double> > typeToWeight;
-	virtual int calc(const Coordinates & src, const Coordinates & dest, int type);
+	
+	virtual int calc(const Edge & edge);
+};
+
+struct MaxSpeedGeodesicDistanceWeightCalculator: public WeightCalculator {
+	MaxSpeedGeodesicDistanceWeightCalculator(StatePtr state) : state(state) {}
+	StatePtr state;
+	std::shared_ptr< std::unordered_map<int, double> > typeToWeight;
+	virtual int calc(const Edge & edge);
 };
 
 }}}//end namespace

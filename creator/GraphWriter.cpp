@@ -48,33 +48,29 @@ namespace osm {
 namespace graphtools {
 namespace creator {
 
-FmiTextGraphWriter::FmiTextGraphWriter(std::ostream & out) :  out(out) {}
+FmiTextGraphWriter::FmiTextGraphWriter(std::ostream & out) :  m_out(out) {}
 FmiTextGraphWriter::~FmiTextGraphWriter(){}
 
-void FmiTextGraphWriter::put(const Node & n) {
-	out << n.id << " " << n.osmId<< " " << n.coordinates.lat << " " << n.coordinates.lon << " " << n.elev << " " << n.carryover.size() << " " << n.carryover;
-}
-
-void FmiTextGraphWriter::put(const Edge & e) {
-	out << e.source << " " << e.target << " " << e.weight << " " << e.type << " " << e.carryover.size() << " " << e.carryover;
-}
-
 void FmiTextGraphWriter::writeHeader(uint64_t nodeCount, uint64_t edgeCount) {
-	out << nodeCount << std::endl;
-	out << edgeCount << std::endl;
+	out() << nodeCount << std::endl;
+	out() << edgeCount << std::endl;
 }
 
-void FmiTextGraphWriter::writeNode(const Node & node) {
-	put(node);
-	out << std::endl;
+void FmiTextGraphWriter::writeNode(const Node & n) {
+	out() << n.id << " " << n.osmId<< " " << n.coordinates.lat << " " << n.coordinates.lon << " " << n.elev << " " << n.carryover.size() << " " << n.carryover << std::endl;
 }
 
-void FmiTextGraphWriter::writeEdge(const Edge & edge) {
-	put(edge);
-	out << std::endl;
+void FmiTextGraphWriter::writeEdge(const Edge & e) {
+	out() << e.source << " " << e.target << " " << e.weight << " " << e.type << " " << e.carryover.size() << " " << e.carryover << std::endl;
 }
 
-FmiBinaryGraphWriter::FmiBinaryGraphWriter(std::ostream & out) :  out(out) {}
+FmiMaxSpeedTextGraphWriter::FmiMaxSpeedTextGraphWriter(std::ostream & out) : FmiTextGraphWriter(out) {}
+FmiMaxSpeedTextGraphWriter::~FmiMaxSpeedTextGraphWriter() {}
+void FmiMaxSpeedTextGraphWriter::writeEdge(const Edge & e) {
+	out() << e.source << " " << e.target << " " << e.weight << " " << e.type << " " << " " << e.maxspeed << e.carryover.size() << " " << e.carryover << std::endl;
+}
+
+FmiBinaryGraphWriter::FmiBinaryGraphWriter(std::ostream & out) :  m_out(out) {}
 
 
 FmiBinaryGraphWriter::~FmiBinaryGraphWriter() {}
@@ -83,14 +79,14 @@ void FmiBinaryGraphWriter::putInt(int32_t v) {
 	v = htobe32(v);
 	char tmp[sizeof(v)];
 	memcpy(tmp, &v, sizeof(v));
-	out.write(tmp, sizeof(v));
+	out().write(tmp, sizeof(v));
 }
 
 void FmiBinaryGraphWriter::putLong(int64_t v) {
 	v = htobe64(v);
 	char tmp[sizeof(v)];
 	memcpy(tmp, &v, sizeof(v));
-	out.write(tmp, sizeof(v));
+	out().write(tmp, sizeof(v));
 }
 
 void FmiBinaryGraphWriter::putDouble(double v) {
@@ -102,34 +98,42 @@ void FmiBinaryGraphWriter::putDouble(double v) {
 	putLong(tmp.i);
 }
 
-void FmiBinaryGraphWriter::put(const Node & n) {
+void FmiBinaryGraphWriter::writeHeader(uint64_t nodeCount, uint64_t edgeCount) {
+	putInt(nodeCount);
+	putInt(edgeCount);
+}
+
+void FmiBinaryGraphWriter::writeNode(const Node & n) {
 	putInt(n.id);
 	putLong(n.osmId);
 	putDouble(n.coordinates.lat);
 	putDouble(n.coordinates.lon);
 	putInt(n.elev);
 	putInt(n.carryover.size());
-	out.write(n.carryover.c_str(), n.carryover.size());
+	out().write(n.carryover.c_str(), n.carryover.size());
 }
-void FmiBinaryGraphWriter::put(const Edge & e) {
+
+void FmiBinaryGraphWriter::writeEdge(const Edge & e) {
 	putInt(e.source);
 	putInt(e.target);
 	putInt(e.weight);
 	putInt(e.type);
 	putInt(e.carryover.size());
-	out.write(e.carryover.c_str(), e.carryover.size());
+	out().write(e.carryover.c_str(), e.carryover.size());
 }
-void FmiBinaryGraphWriter::writeHeader(uint64_t nodeCount, uint64_t edgeCount) {
-	out << nodeCount << std::endl;
-	out << edgeCount << std::endl;
-}
-void FmiBinaryGraphWriter::writeNode(const Node & node) {
-	put(node);
-	out << std::endl;
-}
-void FmiBinaryGraphWriter::writeEdge(const Edge & edge) {
-	put(edge);
-	out << std::endl;
+
+
+FmiMaxSpeedBinaryGraphWriter::FmiMaxSpeedBinaryGraphWriter(std::ostream & out) : FmiBinaryGraphWriter(out) {}
+FmiMaxSpeedBinaryGraphWriter::~FmiMaxSpeedBinaryGraphWriter() {}
+
+void FmiMaxSpeedBinaryGraphWriter::writeEdge(const Edge & e) {
+	putInt(e.source);
+	putInt(e.target);
+	putInt(e.weight);
+	putInt(e.type);
+	putInt(e.maxspeed);
+	putInt(e.carryover.size());
+	out().write(e.carryover.c_str(), e.carryover.size());
 }
 
 }}}//end namespace

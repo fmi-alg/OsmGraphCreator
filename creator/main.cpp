@@ -8,7 +8,7 @@ using namespace osm::graphtools::creator;
 //highway-value
 //type-id (integer)
 //weight (double) in km/h
-bool readConfig(const std::string & fileName, std::unordered_map<std::string, int> & hwTagIds, std::unordered_map<int, double> & typeToWeight) {
+bool readConfig(const std::string & fileName, State::Configuration & cfg) {
 	std::ifstream inFile;
 	inFile.open(fileName);
 	if (!inFile.is_open()) {
@@ -23,8 +23,8 @@ bool readConfig(const std::string & fileName, std::unordered_map<std::string, in
 		std::getline(inFile, weight);
 		
 		int id = atoi(typeId.c_str());
-		hwTagIds[value] = id;
-		typeToWeight[id] = 360.0 / atof(weight.c_str()); // 100 / ( (w*1000)/3600 )
+		cfg.hwTagIds[value] = id;
+		cfg.typeToWeight[id] = 360.0 / atof(weight.c_str()); // 100 / ( (w*1000)/3600 )
 	}
 	return true;
 }
@@ -39,7 +39,7 @@ int main(int argc, char ** argv) {
 	std::string configFileName;
 	std::string inputFileName;
 	std::string outFileName;
-	State state;
+	StatePtr state(new State());
 	WeightCalculatorType wcType = WC_DISTANCE;
 	GraphType graphType = GT_FMI_TEXT;
 	
@@ -105,18 +105,18 @@ int main(int argc, char ** argv) {
 		return -1;
 	}
 	
-	if (!readConfig(configFileName, *state.hwTagIds, *state.typeToWeight)) {
+	if (!readConfig(configFileName, state->cfg)) {
 		std::cout << "Failed to read config" << std::endl;
 	}
 	else {
-		std::cout << "Found " << state.hwTagIds->size() << " config entries" << std::endl;
+		std::cout << "Found " << state->cfg.hwTagIds.size() << " config entries" << std::endl;
 	}
 	
-	if (state.hwTagIds->count("motorway")) {
-		state.implicitOneWay->insert(state.hwTagIds->at("motorway"));
+	if (state->cfg.hwTagIds.count("motorway")) {
+		state->cfg.implicitOneWay.insert(state->cfg.hwTagIds.at("motorway"));
 	}
-	if (state.hwTagIds->count("motorway_link")) {
-		state.implicitOneWay->insert(state.hwTagIds->at("motorway_link"));
+	if (state->cfg.hwTagIds.count("motorway_link")) {
+		state->cfg.implicitOneWay.insert(state->cfg.hwTagIds.at("motorway_link"));
 	}
 	
 	uint64_t edgeCount = 0;
@@ -136,24 +136,24 @@ int main(int argc, char ** argv) {
 
 		//Now get all nodeRefs we need
 		{
-			RefGatherProcessor refGatherProcessor(nodeRefs, state.implicitOneWay, &edgeCount);
-			WayParser wayParser("Gathering nodeRefs", inFile, *state.hwTagIds);
+			RefGatherProcessor refGatherProcessor(state, nodeRefs, &edgeCount);
+			WayParser wayParser("Gathering nodeRefs", inFile, state->cfg.hwTagIds);
 			wayParser.parse(refGatherProcessor);
 		}
-		state.nodes->reserve(nodeRefs->size());
-		gatherNodes(inFile, nodeRefs, state.nodes, state.osmIdToMyNodeId);
+		state->nodes.reserve(nodeRefs->size());
+		gatherNodes(inFile, *nodeRefs, state);
 		
 
 		if (nodeRefs->size()) { //check if we have to mark some ways invalid
 			inFile.dataSeek(0);
-			InvalidWayMarkingProcessor iwmP(nodeRefs, state.invalidWays, state.implicitOneWay, &edgeCount);
-			WayParser wayParser("Marking invalid ways", inFile, *state.hwTagIds);
+			InvalidWayMarkingProcessor iwmP(state, nodeRefs, &edgeCount);
+			WayParser wayParser("Marking invalid ways", inFile, state->cfg.hwTagIds);
 			wayParser.parse(iwmP);
 		}
 	}
 	{//write the nodes out
-		graphWriter->writeHeader(state.nodes->size(), edgeCount);
-		graphWriter->writeNodes(state.nodes->begin(), state.nodes->end());
+		graphWriter->writeHeader(state->nodes.size(), edgeCount);
+		graphWriter->writeNodes(state->nodes.begin(), state->nodes.end());
 	}
 
 	inFile.dataSeek(0);
@@ -164,14 +164,18 @@ int main(int argc, char ** argv) {
 			weightCalculator.reset(new NoWeightCalculator());
 			break;
 		case WC_TIME:
-			weightCalculator.reset(new GeodesicDistanceWeightCalculator());
+			weightCalculator.reset(new GeodesicDistanceWeightCalculator(state));
+			break;
+		case WC_MAXSPEED:
+			weightCalculator.reset(new MaxSpeedGeodesicDistanceWeightCalculator(state));
 			break;
 		case WC_DISTANCE:
 		default:
-			weightCalculator.reset(new GeodesicDistanceWeightCalculator());
+			weightCalculator.reset(new GeodesicDistanceWeightCalculator(state));
+			break;
 		};
-		FinalWayProcessor finalWayProcessor(state.osmIdToMyNodeId, state.invalidWays, state.implicitOneWay, graphWriter, state.nodes, weightCalculator);
-		WayParser wayParser("Processing ways", inFile, *state.hwTagIds);
+		FinalWayProcessor finalWayProcessor(state, graphWriter, weightCalculator);
+		WayParser wayParser("Processing ways", inFile, state->cfg.hwTagIds);
 		wayParser.parse(finalWayProcessor);
 	}
 

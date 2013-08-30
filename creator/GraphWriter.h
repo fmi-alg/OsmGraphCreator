@@ -36,33 +36,46 @@ struct GraphWriter {
 
 class FmiTextGraphWriter: public GraphWriter {
 private:
-	std::ostream & out;
+	std::ostream & m_out;
+protected:
+	inline std::ostream & out() { return m_out; }
 public:
 	FmiTextGraphWriter(std::ostream & out);
 	virtual ~FmiTextGraphWriter();
-	void put(const Node & n);
-	void put(const Edge & e);
 	virtual void writeHeader(uint64_t nodeCount, uint64_t edgeCount);
 	virtual void writeNode(const Node & node);
 	virtual void writeEdge(const Edge & edge);
 };
 
+class FmiMaxSpeedTextGraphWriter: public FmiTextGraphWriter {
+public:
+	FmiMaxSpeedTextGraphWriter(std::ostream & out);
+	virtual ~FmiMaxSpeedTextGraphWriter();
+	virtual void writeEdge(const Edge & edge);
+};
+
 class FmiBinaryGraphWriter: public GraphWriter {
 private:
-	std::ostream & out;
+	std::ostream & m_out;
+protected:
+	inline std::ostream & out() { return m_out; }
 public:
 	FmiBinaryGraphWriter(std::ostream & out);
 	virtual ~FmiBinaryGraphWriter();
 	void putInt(int32_t v);
 	void putLong(int64_t v);
 	void putDouble(double v);
-	void put(const Node & n);
-	void put(const Edge & e);
 	virtual void writeHeader(uint64_t nodeCount, uint64_t edgeCount);
 	virtual void writeNode(const Node & node);
 	virtual void writeEdge(const Edge & edge);
 };
 
+class FmiMaxSpeedBinaryGraphWriter: public FmiBinaryGraphWriter {
+public:
+	FmiMaxSpeedBinaryGraphWriter(std::ostream & out);
+	virtual ~FmiMaxSpeedBinaryGraphWriter();
+	virtual void writeEdge(const Edge & edge);
+};
 
 }}}//end namespace
 

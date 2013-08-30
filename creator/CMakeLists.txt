@@ -3,7 +3,8 @@ project(creator)
 include_directories(${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_SOURCE_DIR})
 find_package(Protobuf REQUIRED)
 find_package(ZLIB REQUIRED)
-find_package(GeographicLib)
+find_package(GeographicLib REQUIRED)
+find_package(Ragel REQUIRED)
 
 set(DEFAULT_INCLUDE_DIRS
 	${PROTOBUF_INCLUDE_DIRS}
@@ -19,6 +20,9 @@ set(DEFAULT_INCLUDE_DIRS
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c99 -Wall")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++0x -Wall")
 
+set(RAGEL_FLAGS "-G2")
+
+RAGEL_PARSER(MaxSpeedParser.rl)
 
 include_directories(${DEFAULT_INCLUDE_DIRS})
 
@@ -33,6 +37,7 @@ set(SOURCES_CPP
 main.cpp
 GraphWriter.cpp
 WeightCalculator.cpp
+MaxSpeedParser.cpp
 )
 
 add_executable("${PROJECT_NAME}" ${SOURCES_CPP})
