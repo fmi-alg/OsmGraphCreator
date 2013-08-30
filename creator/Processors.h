@@ -95,17 +95,11 @@ struct WayParser {
 				for (osmpbf::IWayStream way = pbi.getWayStream(); !way.isNull(); way.next()) {
 					OneWayStatus ows = OW_IMPLICIT;
 					int hwType = 0;
-					uint8_t done = 2 + keysToStore.size();
 					bool process = false;
 					for(int i = 0, s = way.tagsSize(); i < s; ++i) {
 						uint32_t keyId = way.keyId(i);
 						if (keyId == onewayTagId) {
 							ows = (toBool(way.value(i) ) > 0 ? OW_YES : OW_NO);
-							--done;
-							if (done)
-								continue;
-							else
-								break;
 						}
 						else if (keyId == highwayTagId) {
 							uint32_t valueId = way.valueId(i);
@@ -116,13 +110,8 @@ struct WayParser {
 							else {
 								break;
 							}
-							--done;
-							if (done)
-								continue;
-							else
-								break;
 						}
-						else if(keysToStore.count(keyId)) {
+						if(keysToStore.count(keyId)) {
 							storedKv[way.key(i)] = way.value(i);
 						}
 					}
