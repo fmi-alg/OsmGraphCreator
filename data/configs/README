@@ -1,0 +1,5 @@
+These are predefined configurations for the graph-creator. They have the following meaning
+
+highway-value i.e. pedestrian
+integer the type of the edge
+value the travel speed on this edge type

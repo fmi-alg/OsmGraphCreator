@@ -1,0 +1,15 @@
+You need:
+cmake
+google protobuf
+geographiclib
+zlib
+
+Builing:
+mkdir build
+cd build
+cmake ../
+make
+
+Running:
+cd build/creator/
+./creator -g fmitext -t distance -c ../../data/configs/car.cfg -o mygraph.txt mygraph.osm.pbf
