@@ -13,7 +13,7 @@ namespace creator {
 
 enum OneWayStatus {OW_YES, OW_NO, OW_IMPLICIT};
 enum WeightCalculatorType {WC_NONE, WC_DISTANCE, WC_TIME, WC_MAXSPEED};
-enum GraphType {GT_FMI_TEXT, GT_FMI_BINARY};
+enum GraphType {GT_FMI_TEXT, GT_FMI_BINARY, GT_FMI_MAXSPEED_BINARY, GT_FMI_MAXSPEED_TEXT};
 
 struct Coordinates {
 	Coordinates() {}
@@ -55,7 +55,7 @@ struct State {
 		std::unordered_map<std::string, int> hwTagIds;
 		std::unordered_map<int, double> typeToWeight; //weight is in 1/100 sec to travel 1 m
 		std::unordered_set<int> implicitOneWay;
-		inline double maxSpeedFromType(int type) { return typeToWeight.at(type)/360.0; }
+		inline double maxSpeedFromType(int type) { return 360.0/typeToWeight.at(type); }
 	} cfg;
 	std::unordered_map<int64_t, uint32_t> osmIdToMyNodeId;
 	std::unordered_set<int64_t> invalidWays;

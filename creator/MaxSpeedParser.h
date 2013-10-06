@@ -3,6 +3,14 @@
 #include <string>
 
 ///@return maxspeed in km/h, -1 on error
-double parseMaxSpeed(const std::string & str);
+bool parseMaxSpeed(const std::string & str, double & maxspeed);
+
+inline bool parseMaxSpeed(const std::string & str, int & maxspeed) {
+	double tmp;
+	bool ok = parseMaxSpeed(str, tmp);
+	maxspeed = tmp;
+	return ok;
+}
+
 
 #endif

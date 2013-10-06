@@ -22,7 +22,7 @@
 	}
 
 	action errorHandler {
-		return -1;
+		return false;
 	}
 	
 	myspace = (space | "\n");
@@ -36,18 +36,17 @@
 	write data;
 }%%
 
-double parseMaxSpeed(const std::string & str) {
+bool parseMaxSpeed(const std::string & str, double & maxSpeed) {
 	const char * pb = str.c_str();
 	const char * p = pb;
 	const char * pe = pb + str.size();
 	const char * eof = pe;
 // 	const char * ts = p;
 	int cs;
-	double maxSpeed;
 	
 	%% write init;
 	
 	%% write exec;
 	
-	return maxSpeed;
+	return true;
 }

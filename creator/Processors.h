@@ -184,7 +184,7 @@ struct FinalWayProcessor {
 	FinalWayProcessor(StatePtr state, std::shared_ptr<GraphWriter> graphWriter, std::shared_ptr<WeightCalculator> weightCalculator) :
 	state(state), graphWriter(graphWriter), weightCalculator(weightCalculator)
 	{
-		kS.insert("maxpeed");
+		kS.insert("maxspeed");
 	}
 	
 	StatePtr state;
@@ -197,7 +197,10 @@ struct FinalWayProcessor {
 	inline void operator()(int ows, int hwType, const std::unordered_map<std::string, std::string> & storedKv, const osmpbf::IWay & way) {
 		if (state->invalidWays.count(way.id()) == 0) {
 			bool undirectEdge = isUndirectedEdge(state->cfg.implicitOneWay, ows, hwType);
-			int maxSpeed = (storedKv.count("maxspeed") ? parseMaxSpeed(storedKv.at("maxpeed")) : state->cfg.maxSpeedFromType(hwType) );
+			int maxSpeed;
+			if (!storedKv.count("maxspeed") || !parseMaxSpeed(storedKv.at("maxspeed"), maxSpeed)) {
+				maxSpeed = state->cfg.maxSpeedFromType(hwType);
+			}
 			osmpbf::IWayStream::RefIterator refSrc(way.refBegin());
 			osmpbf::IWayStream::RefIterator refTg(way.refBegin()); ++refTg;
 			osmpbf::IWayStream::RefIterator refEnd(way.refEnd());
