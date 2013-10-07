@@ -51,6 +51,7 @@ class FmiMaxSpeedTextGraphWriter: public FmiTextGraphWriter {
 public:
 	FmiMaxSpeedTextGraphWriter(std::ostream & out);
 	virtual ~FmiMaxSpeedTextGraphWriter();
+	virtual void writeHeader(uint64_t nodeCount, uint64_t edgeCount);
 	virtual void writeEdge(const Edge & edge);
 };
 
@@ -74,6 +75,7 @@ class FmiMaxSpeedBinaryGraphWriter: public FmiBinaryGraphWriter {
 public:
 	FmiMaxSpeedBinaryGraphWriter(std::ostream & out);
 	virtual ~FmiMaxSpeedBinaryGraphWriter();
+	virtual void writeHeader(uint64_t nodeCount, uint64_t edgeCount);	
 	virtual void writeEdge(const Edge & edge);
 };
 

@@ -58,10 +58,10 @@ FmiTextGraphWriter::FmiTextGraphWriter(std::ostream & out) :  m_out(out) {}
 FmiTextGraphWriter::~FmiTextGraphWriter(){}
 
 void FmiTextGraphWriter::writeHeader(uint64_t nodeCount, uint64_t edgeCount) {
-	out() << "Id : 0" << std::endl;
-	out() << "Timestamp : " << time(0) << std::endl;
-	out() << "Type : standard" << std::endl;
-	out() << "Revision: 1 " << std::endl;
+	out() << "# Id : 0" << std::endl;
+	out() << "# Timestamp : " << time(0) << std::endl;
+	out() << "# Type : standard" << std::endl;
+	out() << "# Revision: 1 " << std::endl;
 	out() << nodeCount << std::endl;
 	out() << edgeCount << std::endl;
 }
@@ -76,8 +76,18 @@ void FmiTextGraphWriter::writeEdge(const Edge & e) {
 
 FmiMaxSpeedTextGraphWriter::FmiMaxSpeedTextGraphWriter(std::ostream & out) : FmiTextGraphWriter(out) {}
 FmiMaxSpeedTextGraphWriter::~FmiMaxSpeedTextGraphWriter() {}
+
+void FmiMaxSpeedTextGraphWriter::writeHeader(uint64_t nodeCount, uint64_t edgeCount) {
+	out() << "# Id : 0" << std::endl;
+	out() << "# Timestamp : " << time(0) << std::endl;
+	out() << "# Type : maxspeed" << std::endl;
+	out() << "# Revision: 1 " << std::endl;
+	out() << nodeCount << std::endl;
+	out() << edgeCount << std::endl;
+}
+
 void FmiMaxSpeedTextGraphWriter::writeEdge(const Edge & e) {
-	out() << e.source << " " << e.target << " " << e.weight << " " << e.type << " " << " " << e.maxspeed << e.carryover.size() << " " << e.carryover << std::endl;
+	out() << e.source << " " << e.target << " " << e.weight << " " << e.type << " " << e.maxspeed << " " << e.carryover.size() << " " << e.carryover << std::endl;
 }
 
 FmiBinaryGraphWriter::FmiBinaryGraphWriter(std::ostream & out) :  m_out(out) {}
@@ -109,10 +119,11 @@ void FmiBinaryGraphWriter::putDouble(double v) {
 }
 
 void FmiBinaryGraphWriter::writeHeader(uint64_t nodeCount, uint64_t edgeCount) {
-	out() << "Id : 0" << std::endl;
-	out() << "Timestamp : " << time(0) << std::endl;
-	out() << "Type : maxspeed" << std::endl;
-	out() << "Revision: 1 " << std::endl;
+	out() << "# Id : 0" << std::endl;
+	out() << "# Timestamp : " << time(0) << std::endl;
+	out() << "# Type : standard" << std::endl;
+	out() << "# Revision: 1 " << std::endl;
+	out() << std::endl;
 	putInt(nodeCount);
 	putInt(edgeCount);
 }
@@ -139,6 +150,16 @@ void FmiBinaryGraphWriter::writeEdge(const Edge & e) {
 
 FmiMaxSpeedBinaryGraphWriter::FmiMaxSpeedBinaryGraphWriter(std::ostream & out) : FmiBinaryGraphWriter(out) {}
 FmiMaxSpeedBinaryGraphWriter::~FmiMaxSpeedBinaryGraphWriter() {}
+
+void FmiMaxSpeedBinaryGraphWriter::writeHeader(uint64_t nodeCount, uint64_t edgeCount) {
+	out() << "# Id : 0" << std::endl;
+	out() << "# Timestamp : " << time(0) << std::endl;
+	out() << "# Type : maxspeed" << std::endl;
+	out() << "# Revision: 1 " << std::endl;
+	out() << std::endl;
+	putInt(nodeCount);
+	putInt(edgeCount);
+}
 
 void FmiMaxSpeedBinaryGraphWriter::writeEdge(const Edge & e) {
 	putInt(e.source);
