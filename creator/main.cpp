@@ -32,7 +32,7 @@ bool readConfig(const std::string & fileName, State::Configuration & cfg) {
 
 int main(int argc, char ** argv) {
 	if (argc < 4) {
-		std::cout << "prog -g (fmitext| fmibinary) -t (none|distance|time|maxspeed) -c <config> -o <outfile> <infile>" << std::endl;
+		std::cout << "prog -g (fmitext|fmibinary|fmimaxspeedtext|fmimaxspeedbinary) -t (none|distance|time|maxspeed) -c <config> -o <outfile> <infile>" << std::endl;
 		return -1;
 	}
 
@@ -135,9 +135,11 @@ int main(int argc, char ** argv) {
 		graphWriter.reset(new FmiBinaryGraphWriter(outFile));
 		break;
 	case GT_FMI_MAXSPEED_BINARY:
-		graphWriter.reset(new FmiMaxSpeedTextGraphWriter(outFile));
+		graphWriter.reset(new FmiMaxSpeedBinaryGraphWriter(outFile));
+		break;
 	case GT_FMI_MAXSPEED_TEXT:
 		graphWriter.reset(new FmiMaxSpeedTextGraphWriter(outFile));
+		break;
 	case GT_FMI_TEXT:
 	default:
 		graphWriter.reset(new FmiTextGraphWriter(outFile));
