@@ -34,7 +34,7 @@ int MaxSpeedGeodesicDistanceWeightCalculator::calc(const Edge & edge) {
 	Coordinates src( state->nodes.at(edge.source).coordinates );
 	Coordinates dest( state->nodes.at(edge.target).coordinates );
 	GeographicLib::Geodesic::WGS84.Inverse(src.lat, src.lon, dest.lat, dest.lon, length);
-	return length/(edge.maxspeed*3.6) ;
+	return length*3600/edge.maxspeed;
 }
 
 
