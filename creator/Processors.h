@@ -197,7 +197,7 @@ struct FinalWayProcessor {
 	inline void operator()(int ows, int hwType, const std::unordered_map<std::string, std::string> & storedKv, const osmpbf::IWay & way) {
 		if (state->invalidWays.count(way.id()) == 0) {
 			bool undirectEdge = isUndirectedEdge(state->cfg.implicitOneWay, ows, hwType);
-			int maxSpeed;
+			int maxSpeed = 0;
 			if (!storedKv.count("maxspeed") || !parseMaxSpeed(storedKv.at("maxspeed"), maxSpeed)) {
 				maxSpeed = state->cfg.maxSpeedFromType(hwType);
 			}
