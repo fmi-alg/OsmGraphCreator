@@ -35,6 +35,8 @@ struct Node {
 };
 
 //[source][target][weight][type][sizecarryover][carryover] //kante
+///@member maxspeed this is always in km/h
+///@meber weight this is usualy either the length of the arc or the travel time
 struct Edge {
 	Edge() {}
 	Edge(uint32_t source, uint32_t target, int32_t weight, int32_t type, int32_t maxspeed) : source(source), target(target), weight(weight), type(type), maxspeed(maxspeed) {}
@@ -46,7 +48,7 @@ struct Edge {
 	uint32_t target;
 	int32_t weight;
 	int32_t type;
-	int32_t maxspeed;
+	int32_t maxspeed; //in km/h
 	std::string carryover;
 };
 
