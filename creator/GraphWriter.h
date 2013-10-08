@@ -1,6 +1,7 @@
 #ifndef OSM_GRAPH_TOOLS_GRAPH_WRITER_H
 #define OSM_GRAPH_TOOLS_GRAPH_WRITER_H
 #include "types.h"
+#include "RamGraph.h"
 #include <sserialize/utility/ProgressInfo.h>
 #include <ostream>
 
@@ -77,6 +78,18 @@ public:
 	virtual ~FmiMaxSpeedBinaryGraphWriter();
 	virtual void writeHeader(uint64_t nodeCount, uint64_t edgeCount);	
 	virtual void writeEdge(const Edge & edge);
+};
+
+class RamGraphWriter: public graphtools::creator::GraphWriter {
+	osm::graphs::ram::RamGraph m_graph;
+	osm::graphs::ram::EdgeContainerSizeType m_edgeBegin;
+public:
+	RamGraphWriter();
+	virtual ~RamGraphWriter();
+	osm::graphs::ram::RamGraph & graph();
+	virtual void writeHeader(uint64_t nodeCount, uint64_t edgeCount);
+	virtual void writeNode(const graphtools::creator::Node & node);
+	virtual void writeEdge(const graphtools::creator::Edge & edge);
 };
 
 }}}//end namespace

@@ -28,6 +28,7 @@ include_directories(${DEFAULT_INCLUDE_DIRS})
 
 set(LINK_LIBS
 ${osmpbf_BINARY_DIR}/libosmpbf.a
+${sserialize_BINARY_DIR}/libsserialize.a
 ${PROTOBUF_LIBRARIES}
 ${ZLIB_LIBRARIES}
 ${GeographicLib_LIBRARIES}
@@ -38,8 +39,9 @@ main.cpp
 GraphWriter.cpp
 WeightCalculator.cpp
 MaxSpeedParser.cpp
+RamGraph.cpp
 )
 
 add_executable("${PROJECT_NAME}" ${SOURCES_CPP})
 target_link_libraries("${PROJECT_NAME}" ${LINK_LIBS})
-add_dependencies("${PROJECT_NAME}" osmpbf)
+add_dependencies("${PROJECT_NAME}" osmpbf sserialize)

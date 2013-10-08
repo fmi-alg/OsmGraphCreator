@@ -32,7 +32,7 @@ set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c99 -Wall -Wno-unknown-pragmas")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++0x -Wall -Wno-unknown-pragmas")
 
 add_subdirectory(vendor/osmpbf osmpbf)
-#add_subdirectory(vendor/sserialize sserialize)
+add_subdirectory(vendor/sserialize sserialize)
 add_subdirectory(creator creator)
 
 add_subdirectory(graphs)

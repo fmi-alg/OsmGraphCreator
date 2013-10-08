@@ -13,7 +13,7 @@ namespace creator {
 
 enum OneWayStatus {OW_YES, OW_NO, OW_IMPLICIT};
 enum WeightCalculatorType {WC_NONE, WC_DISTANCE, WC_TIME, WC_MAXSPEED};
-enum GraphType {GT_FMI_TEXT, GT_FMI_BINARY, GT_FMI_MAXSPEED_BINARY, GT_FMI_MAXSPEED_TEXT};
+enum GraphType {GT_FMI_TEXT, GT_FMI_BINARY, GT_FMI_MAXSPEED_BINARY, GT_FMI_MAXSPEED_TEXT, GT_SSERIALIZE_OFFSET_ARRAY};
 
 struct Coordinates {
 	Coordinates() {}
@@ -26,12 +26,14 @@ struct Coordinates {
 struct Node {
 	Node() {}
 	Node(uint32_t id, int64_t osmId, const Coordinates & coordinates, int elev) :
-	id(id), osmId(osmId), coordinates(coordinates), elev(elev) {}
+	id(id), osmId(osmId), coordinates(coordinates), elev(elev), indegree(0), outdegree(0) {}
 	uint32_t id;
 	int64_t osmId;
 	Coordinates coordinates;
 	int elev;
 	std::string carryover;
+	uint16_t indegree;
+	uint16_t outdegree;
 };
 
 //[source][target][weight][type][sizecarryover][carryover] //kante

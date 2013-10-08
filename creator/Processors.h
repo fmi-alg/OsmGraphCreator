@@ -180,6 +180,35 @@ struct InvalidWayMarkingProcessor {
 	}
 };
 
+struct NodeDegreeProcessor {
+	NodeDegreeProcessor(StatePtr state) :
+	state(state)
+	{}
+	
+	StatePtr state;
+	std::unordered_set<std::string> kS;
+	inline const std::unordered_set<std::string> & keysToStore() const { return kS; }
+	
+	inline void operator()(int ows, int hwType, const std::unordered_map<std::string, std::string> & storedKv, const osmpbf::IWay & way) {
+		if (state->invalidWays.count(way.id()) == 0) {
+			bool undirectEdge = isUndirectedEdge(state->cfg.implicitOneWay, ows, hwType);
+			osmpbf::IWayStream::RefIterator refSrc(way.refBegin());
+			osmpbf::IWayStream::RefIterator refTg(way.refBegin()); ++refTg;
+			osmpbf::IWayStream::RefIterator refEnd(way.refEnd());
+			for(; refTg != refEnd; ++refTg, ++refSrc) {
+				Edge e(state->osmIdToMyNodeId.at(*refSrc), state->osmIdToMyNodeId.at(*refTg), 1, hwType, 0);
+				state->nodes.at(e.source).outdegree += 1;
+				state->nodes.at(e.target).indegree += 1;
+				if (undirectEdge) {
+					e.reverse();
+					state->nodes.at(e.source).outdegree += 1;
+					state->nodes.at(e.target).indegree += 1;
+				}
+			}
+		}
+	};
+};
+
 struct FinalWayProcessor {
 	FinalWayProcessor(StatePtr state, std::shared_ptr<GraphWriter> graphWriter, std::shared_ptr<WeightCalculator> weightCalculator) :
 	state(state), graphWriter(graphWriter), weightCalculator(weightCalculator)

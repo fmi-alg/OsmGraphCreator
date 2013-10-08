@@ -171,4 +171,29 @@ void FmiMaxSpeedBinaryGraphWriter::writeEdge(const Edge & e) {
 	out().write(e.carryover.c_str(), e.carryover.size());
 }
 
+RamGraphWriter::RamGraphWriter() : m_edgeBegin(0) {}
+
+RamGraphWriter::~RamGraphWriter() {}
+
+osm::graphs::ram::RamGraph & RamGraphWriter::graph() { return m_graph; }
+
+void RamGraphWriter::writeHeader(uint64_t nodeCount, uint64_t edgeCount) {
+	m_graph.nodes().reserve(nodeCount);
+	m_graph.edges().resize(edgeCount);
+}
+
+void RamGraphWriter::writeNode(const graphtools::creator::Node & node) {
+	m_graph.nodes().push_back( osm::graphs::ram::Node(m_edgeBegin, node.outdegree) );
+	m_edgeBegin += node.outdegree;
+}
+
+void RamGraphWriter::writeEdge(const graphtools::creator::Edge & edge) {
+	osm::graphs::ram::Node & gnode = m_graph.nodes()[edge.source];
+	osm::graphs::ram::Edge & gedge = m_graph.edges()[gnode.edgesBegin+gnode.edgeCount];
+	++gnode.edgeCount;
+	gedge.dest = edge.target;
+	gedge.weight = edge.weight;
+	gedge.type = edge.type;
+}
+
 }}}//end namespace

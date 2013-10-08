@@ -1,6 +1,7 @@
 #include <iostream>
 #include <fstream>
 #include "Processors.h"
+#include "RamGraph.h"
 
 using namespace osm::graphtools::creator;
 
@@ -32,7 +33,7 @@ bool readConfig(const std::string & fileName, State::Configuration & cfg) {
 
 int main(int argc, char ** argv) {
 	if (argc < 4) {
-		std::cout << "prog -g (fmitext|fmibinary|fmimaxspeedtext|fmimaxspeedbinary) -t (none|distance|time|maxspeed) -c <config> -o <outfile> <infile>" << std::endl;
+		std::cout << "prog -g (fmitext|fmibinary|fmimaxspeedtext|fmimaxspeedbinary|sserializeoffsetarray) -t (none|distance|time|maxspeed) -c <config> -o <outfile> <infile>" << std::endl;
 		return -1;
 	}
 
@@ -88,6 +89,9 @@ int main(int argc, char ** argv) {
 			else if (gtS == "fmimaxspeedbinary") {
 				graphType = GT_FMI_MAXSPEED_BINARY;
 			}
+			else if (gtS == "sserializeoffsetarray") {
+				graphType = GT_SSERIALIZE_OFFSET_ARRAY;
+			}
 			else {
 				std::cerr << "Invalid graph type" << std::endl;
 				return -1;
@@ -98,7 +102,6 @@ int main(int argc, char ** argv) {
 			inputFileName = std::string(argv[i]);
 		}
 	}
-	
 
 	osmpbf::OSMFileIn inFile(inputFileName, false);
 
@@ -140,6 +143,9 @@ int main(int argc, char ** argv) {
 	case GT_FMI_MAXSPEED_TEXT:
 		graphWriter.reset(new FmiMaxSpeedTextGraphWriter(outFile));
 		break;
+	case GT_SSERIALIZE_OFFSET_ARRAY:
+		graphWriter.reset(new RamGraphWriter());
+		break;
 	case GT_FMI_TEXT:
 	default:
 		graphWriter.reset(new FmiTextGraphWriter(outFile));
@@ -166,12 +172,19 @@ int main(int argc, char ** argv) {
 			wayParser.parse(iwmP);
 		}
 	}
+	
+	if (graphType == GT_SSERIALIZE_OFFSET_ARRAY) {
+		NodeDegreeProcessor nodeDegreeProcessor(state);
+		inFile.dataSeek(0);
+		WayParser wayParser("Processing ways", inFile, state->cfg.hwTagIds);
+		wayParser.parse(nodeDegreeProcessor);
+	}
+	
 	{//write the nodes out
 		graphWriter->writeHeader(state->nodes.size(), edgeCount);
 		graphWriter->writeNodes(state->nodes.begin(), state->nodes.end());
 	}
 
-	inFile.dataSeek(0);
 	{
 		std::shared_ptr< WeightCalculator > weightCalculator;
 		switch (wcType) {
@@ -190,8 +203,17 @@ int main(int argc, char ** argv) {
 			break;
 		};
 		FinalWayProcessor finalWayProcessor(state, graphWriter, weightCalculator);
+		inFile.dataSeek(0);
 		WayParser wayParser("Processing ways", inFile, state->cfg.hwTagIds);
 		wayParser.parse(finalWayProcessor);
+	}
+	
+	if (graphType == osm::graphtools::creator::GT_SSERIALIZE_OFFSET_ARRAY) {
+		sserialize::UByteArrayAdapter outFile( sserialize::UByteArrayAdapter::createFile(10*state->nodes.size()+ sserialize::SerializationInfo<osm::graphs::ram::Edge>::length*edgeCount, outFileName) );
+		static_cast<RamGraphWriter*>( graphWriter.get() )->graph().serialize(outFile);
+		if (outFile.tellPutPtr() < outFile.size()) {
+			outFile.shrinkStorage( outFile.size() - outFile.tellPutPtr() );
+		}
 	}
 
 	inFile.close();
