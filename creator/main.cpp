@@ -1,5 +1,6 @@
 #include <iostream>
 #include <fstream>
+#include <limits>
 #include "Processors.h"
 #include "RamGraph.h"
 
@@ -30,6 +31,35 @@ bool readConfig(const std::string & fileName, State::Configuration & cfg) {
 	return true;
 }
 
+bool findNodeIdBounds(osmpbf::OSMFileIn & inFile, uint64_t & smallestId, uint64_t & largestId) {
+	osmpbf::PrimitiveBlockInputAdaptor pbi;
+
+	int64_t tempLargestId = std::numeric_limits<int64_t>::min();
+	int64_t tempSmallestId = std::numeric_limits<int64_t>::max();
+	
+	{
+		while (inFile.parseNextBlock(pbi)) {
+			if (pbi.isNull())
+				continue;
+			if (pbi.waysSize()) {
+				for (osmpbf::IWayStream way = pbi.getWayStream(); !way.isNull(); way.next()) {
+					for(int i = 0, s = way.refsSize(); i < s; ++i) {
+						tempLargestId = std::max<int64_t>(tempLargestId, way.ref(i));
+						tempSmallestId = std::min<int64_t>(tempSmallestId, way.ref(i));
+					}
+				}
+			}
+		}
+	}
+	
+	if (tempLargestId >= 0 && tempSmallestId >= 0) {
+		largestId = tempLargestId;
+		smallestId = tempSmallestId;
+		return true;
+	}
+	return false;
+}
+
 
 int main(int argc, char ** argv) {
 	if (argc < 4) {
@@ -43,6 +73,7 @@ int main(int argc, char ** argv) {
 	StatePtr state(new State());
 	WeightCalculatorType wcType = WC_DISTANCE;
 	GraphType graphType = GT_FMI_TEXT;
+	int64_t hugheHashMapPopulate = -1;
 	
 	
 	for(int i = 1; i < argc;++i) {
@@ -100,6 +131,13 @@ int main(int argc, char ** argv) {
 				return -1;
 			}
 			++i;
+		}
+		else if (token == "-hs" && i+1 < argc) {
+			std::string v(argv[i+1]);
+			if (v == "auto")
+				hugheHashMapPopulate = 0;
+			else
+				hugheHashMapPopulate = atol(v.c_str());
 		}
 		else {
 			inputFileName = std::string(argv[i]);
@@ -165,6 +203,17 @@ int main(int argc, char ** argv) {
 
 		//Now get all nodeRefs we need
 		{
+			if (hugheHashMapPopulate >= 0) {
+				std::cout << "Find node id bounds" << std::endl;
+				uint64_t smallestId, largestId = 0;
+				inFile.dataSeek(0);
+				findNodeIdBounds(inFile, smallestId, largestId);
+				if (hugheHashMapPopulate != 0)
+					largestId = std::min<uint64_t>(smallestId+hugheHashMapPopulate, largestId);
+				state->osmIdToMyNodeId = sserialize::DirectHugheHash<uint32_t>(smallestId, largestId, true);
+			}
+		
+			inFile.dataSeek(0);
 			RefGatherProcessor refGatherProcessor(state, nodeRefs, &edgeCount);
 			WayParser wayParser("Gathering nodeRefs", inFile, state->cfg.hwTagIds);
 			wayParser.parse(refGatherProcessor);

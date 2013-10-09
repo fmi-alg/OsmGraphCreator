@@ -67,7 +67,10 @@ void FmiTextGraphWriter::writeHeader(uint64_t nodeCount, uint64_t edgeCount) {
 }
 
 void FmiTextGraphWriter::writeNode(const Node & n) {
-	out() << n.id << " " << n.osmId<< " " << n.coordinates.lat << " " << n.coordinates.lon << " " << n.elev << " " << n.carryover.size() << " " << n.carryover << std::endl;
+	out() << n.id << " " << n.osmId<< " " << n.coordinates.lat << " " << n.coordinates.lon << " " << n.elev << " " << n.stringCarryOverSize << " ";
+	if (n.stringCarryOverSize)
+		out().write(n.stringCarryOverData, n.stringCarryOverSize);
+	out() << std::endl;
 }
 
 void FmiTextGraphWriter::writeEdge(const Edge & e) {
@@ -134,8 +137,8 @@ void FmiBinaryGraphWriter::writeNode(const Node & n) {
 	putDouble(n.coordinates.lat);
 	putDouble(n.coordinates.lon);
 	putInt(n.elev);
-	putInt(n.carryover.size());
-	out().write(n.carryover.c_str(), n.carryover.size());
+	putInt(n.stringCarryOverSize);
+	out().write(n.stringCarryOverData, n.stringCarryOverSize);
 }
 
 void FmiBinaryGraphWriter::writeEdge(const Edge & e) {

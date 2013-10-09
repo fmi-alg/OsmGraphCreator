@@ -6,6 +6,7 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
+#include <sserialize/templated/DirectHugeHash.h>
 
 namespace osm {
 namespace graphtools {
@@ -25,15 +26,16 @@ struct Coordinates {
 //[Id] [osmId] [lat] [lon] [elevation] [carryover] //Knoten
 struct Node {
 	Node() {}
-	Node(uint32_t id, int64_t osmId, const Coordinates & coordinates, int elev) :
-	id(id), osmId(osmId), coordinates(coordinates), elev(elev), indegree(0), outdegree(0) {}
+	Node(uint32_t id, int64_t osmId, const Coordinates & coordinates, uint16_t elev) :
+	id(id), osmId(osmId), coordinates(coordinates), elev(elev), indegree(0), outdegree(0), stringCarryOverSize(0), stringCarryOverData(0) {}
 	uint32_t id;
 	int64_t osmId;
 	Coordinates coordinates;
-	int elev;
-	std::string carryover;
+	uint16_t elev;
 	uint16_t indegree;
 	uint16_t outdegree;
+	uint16_t stringCarryOverSize;
+	char * stringCarryOverData; //not zero-terminated
 };
 
 //[source][target][weight][type][sizecarryover][carryover] //kante
@@ -61,7 +63,7 @@ struct State {
 		std::unordered_set<int> implicitOneWay;
 		inline double maxSpeedFromType(int type) { return 360.0/typeToWeight.at(type); }
 	} cfg;
-	std::unordered_map<int64_t, uint32_t> osmIdToMyNodeId;
+	sserialize::DirectHugheHash<uint32_t> osmIdToMyNodeId;
 	std::unordered_set<int64_t> invalidWays;
 	std::vector<Node> nodes;
 };
