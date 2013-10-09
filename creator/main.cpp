@@ -92,6 +92,9 @@ int main(int argc, char ** argv) {
 			else if (gtS == "sserializeoffsetarray") {
 				graphType = GT_SSERIALIZE_OFFSET_ARRAY;
 			}
+			else if (gtS == "plot") {
+				graphType = GT_PLOT;
+			}
 			else {
 				std::cerr << "Invalid graph type" << std::endl;
 				return -1;
@@ -111,10 +114,12 @@ int main(int argc, char ** argv) {
 	}
 	
 	std::ofstream outFile;
-	outFile.open(outFileName);
-	if (!outFile.is_open()) {
-		std::cout << "Failed to open out file " << outFileName << std::endl;
-		return -1;
+	if (graphType != GT_SSERIALIZE_OFFSET_ARRAY) {
+		outFile.open(outFileName);
+		if (!outFile.is_open()) {
+			std::cout << "Failed to open out file " << outFileName << std::endl;
+			return -1;
+		}
 	}
 	
 	if (!readConfig(configFileName, state->cfg)) {
@@ -145,6 +150,9 @@ int main(int argc, char ** argv) {
 		break;
 	case GT_SSERIALIZE_OFFSET_ARRAY:
 		graphWriter.reset(new RamGraphWriter());
+		break;
+	case GT_PLOT:
+		graphWriter.reset( new PlotGraph(outFile) );
 		break;
 	case GT_FMI_TEXT:
 	default:
@@ -209,7 +217,7 @@ int main(int argc, char ** argv) {
 	}
 	
 	if (graphType == osm::graphtools::creator::GT_SSERIALIZE_OFFSET_ARRAY) {
-		sserialize::UByteArrayAdapter outFile( sserialize::UByteArrayAdapter::createFile(10*state->nodes.size()+ sserialize::SerializationInfo<osm::graphs::ram::Edge>::length*edgeCount, outFileName) );
+		sserialize::UByteArrayAdapter outFile( sserialize::UByteArrayAdapter::createFile(100*state->nodes.size()+ sserialize::SerializationInfo<osm::graphs::ram::Edge>::length*edgeCount, outFileName) );
 		static_cast<RamGraphWriter*>( graphWriter.get() )->graph().serialize(outFile);
 		if (outFile.tellPutPtr() < outFile.size()) {
 			outFile.shrinkStorage( outFile.size() - outFile.tellPutPtr() );

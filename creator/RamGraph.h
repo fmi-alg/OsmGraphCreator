@@ -9,8 +9,8 @@ namespace osm {
 namespace graphs {
 namespace ram {
 
-typedef uint64_t NodeContainerSizeType;
-typedef uint64_t EdgeContainerSizeType;
+typedef uint32_t NodeContainerSizeType;
+typedef uint32_t EdgeContainerSizeType;
 
 struct Edge {
 	typedef NodeContainerSizeType DestType;
@@ -29,6 +29,10 @@ struct Node {
 	~Node() {}
 	EdgeContainerSizeType edgesBegin;
 	uint16_t edgeCount;
+	struct Coordinates {
+		double lat;
+		double lon;
+	} coords;
 };
 
 class RamGraph {
@@ -66,6 +70,10 @@ struct SerializationInfo<osm::graphs::ram::Edge> {
 
 inline sserialize::UByteArrayAdapter operator<<(sserialize::UByteArrayAdapter & dest, const osm::graphs::ram::Edge & edge) {
 	return dest << edge.dest << edge.weight << edge.type;
+}
+
+inline sserialize::UByteArrayAdapter operator<<(sserialize::UByteArrayAdapter & dest, const osm::graphs::ram::Node::Coordinates & coords) {
+	return dest << coords.lat << coords.lon;
 }
 
 #endif
