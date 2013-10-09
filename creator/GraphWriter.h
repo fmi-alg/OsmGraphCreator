@@ -92,6 +92,20 @@ public:
 	virtual void writeEdge(const graphtools::creator::Edge & edge);
 };
 
+class PlotGraph: public graphtools::creator::GraphWriter {
+private:
+	std::ostream & m_out;
+	std::vector<Coordinates> m_nodes;
+protected:
+	inline std::ostream & out() { return m_out; }
+public:
+	PlotGraph(std::ostream & out);
+	virtual ~PlotGraph();
+	virtual void writeHeader(uint64_t nodeCount, uint64_t edgeCount);
+	virtual void writeNode(const graphtools::creator::Node & node);
+	virtual void writeEdge(const graphtools::creator::Edge & edge);
+};
+
 }}}//end namespace
 
 

@@ -196,4 +196,16 @@ void RamGraphWriter::writeEdge(const graphtools::creator::Edge & edge) {
 	gedge.type = edge.type;
 }
 
+PlotGraph::PlotGraph(std::ostream & out) : m_out(out) {}
+PlotGraph::~PlotGraph() {}
+void PlotGraph::writeHeader(uint64_t nodeCount, uint64_t edgeCount) {
+	m_nodes.reserve(nodeCount);
+}
+void PlotGraph::writeNode(const graphtools::creator::Node & node) {
+	m_nodes.push_back(node.coordinates);
+}
+void PlotGraph::writeEdge(const graphtools::creator::Edge & edge) {
+	out() <<  m_nodes[edge.source].lon << " " << m_nodes[edge.source].lat << " " << m_nodes[edge.target].lon << " " << m_nodes[edge.target].lat << std::endl;
+}
+
 }}}//end namespace
