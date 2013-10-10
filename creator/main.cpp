@@ -199,9 +199,11 @@ int main(int argc, char ** argv) {
 		graphWriter.reset( new PlotGraph(outFile) );
 		break;
 	case GT_FMI_TEXT:
-	default:
 		graphWriter.reset(new FmiTextGraphWriter(outFile));
 		break;
+	default:
+		std::cout << "Unsuported graph format" << std::endl;
+		return -1;
 	};
 
 	{
