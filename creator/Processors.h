@@ -32,7 +32,7 @@ void gatherNodes(osmpbf::OSMFileIn & inFile, std::unordered_set<int64_t> & nodeR
 	uint32_t nodeId = 0;
 	inFile.dataSeek(0);
 	sserialize::ProgressInfo progress;
-	progress.begin(inFile.dataSize(), "Processing nodes");
+	progress.begin(inFile.dataSize(), "Gathering nodes");
 	while (inFile.parseNextBlock(pbi)) {
 		if (pbi.isNull())
 			continue;

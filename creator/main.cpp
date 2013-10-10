@@ -239,9 +239,11 @@ int main(int argc, char ** argv) {
 	if (graphType == GT_SSERIALIZE_OFFSET_ARRAY || graphType == GT_SSERIALIZE_LARGE_OFFSET_ARRAY) {
 		NodeDegreeProcessor nodeDegreeProcessor(state);
 		inFile.dataSeek(0);
-		WayParser wayParser("Processing ways", inFile, state->cfg.hwTagIds);
+		WayParser wayParser("Adding node degree information", inFile, state->cfg.hwTagIds);
 		wayParser.parse(nodeDegreeProcessor);
 	}
+	
+	std::cout << "Graph has " << state->nodes.size() << " nodes and " << edgeCount << " edges." << std::endl;
 	
 	{//write the nodes out
 		state->nodeCoordinates.reserve(state->nodes.size());
@@ -250,10 +252,13 @@ int main(int argc, char ** argv) {
 		graphWriter->writeHeader(state->nodes.size(), edgeCount);
 		graphWriter->endHeader();
 		graphWriter->beginNodes();
-		for(const Node & node : state->nodes) {
-			graphWriter->writeNode(node);
-			state->nodeCoordinates.push_back(node.coordinates);
+		sserialize::ProgressInfo info;
+		info.begin(state->nodes.size(), "Writing out nodes");
+		for(std::size_t i = 0, s = state->nodes.size(); i < s; ++i) {
+			graphWriter->writeNode(state->nodes[i]);
+			state->nodeCoordinates.push_back(state->nodes[i].coordinates);
 		}
+		info.end();
 		graphWriter->endNodes();
 		state->nodes = std::vector<Node>();
 	}
