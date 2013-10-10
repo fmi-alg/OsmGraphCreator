@@ -3,6 +3,7 @@
 #include "types.h"
 #include "RamGraph.h"
 #include <sserialize/utility/ProgressInfo.h>
+#include <sserialize/Static/DynamicFixedLengthVector.h>
 #include <ostream>
 
 namespace osm {
@@ -10,6 +11,15 @@ namespace graphtools {
 namespace creator {
 
 struct GraphWriter {
+	virtual void beginGraph() {}
+	virtual void beginHeader() {}
+	virtual void endHeader() {}
+	virtual void beginNodes() {}
+	virtual void endNodes() {}
+	virtual void beginEdges() {}
+	virtual void endEdges() {}
+	virtual void endGraph() {}
+
 	virtual void writeHeader(uint64_t nodeCount, uint64_t edgeCount) = 0;
 	virtual void writeNode(const Node & node) = 0;
 	virtual void writeEdge(const Edge & edge) = 0;
@@ -81,12 +91,29 @@ public:
 };
 
 class RamGraphWriter: public graphtools::creator::GraphWriter {
+	sserialize::UByteArrayAdapter m_data;
 	osm::graphs::ram::RamGraph m_graph;
 	osm::graphs::ram::EdgeContainerSizeType m_edgeBegin;
 public:
-	RamGraphWriter();
+	RamGraphWriter(const sserialize::UByteArrayAdapter & data);
 	virtual ~RamGraphWriter();
+	virtual void endGraph();
 	osm::graphs::ram::RamGraph & graph();
+	virtual void writeHeader(uint64_t nodeCount, uint64_t edgeCount);
+	virtual void writeNode(const graphtools::creator::Node & node);
+	virtual void writeEdge(const graphtools::creator::Edge & edge);
+};
+
+class StaticGraphWriter: public graphtools::creator::GraphWriter {
+private:
+	sserialize::UByteArrayAdapter m_data;
+	sserialize::Static::DynamicFixedLengthVector<osm::graphs::ram::Node> m_nodes;
+	sserialize::Static::DynamicFixedLengthVector<osm::graphs::ram::Edge> m_edges;
+	uint32_t m_edgeBegin;
+	std::vector<uint32_t> m_edgeOffsets; 
+public:
+	StaticGraphWriter(const sserialize::UByteArrayAdapter & data);
+	virtual ~StaticGraphWriter();
 	virtual void writeHeader(uint64_t nodeCount, uint64_t edgeCount);
 	virtual void writeNode(const graphtools::creator::Node & node);
 	virtual void writeEdge(const graphtools::creator::Edge & edge);

@@ -63,7 +63,7 @@ bool findNodeIdBounds(osmpbf::OSMFileIn & inFile, uint64_t & smallestId, uint64_
 
 int main(int argc, char ** argv) {
 	if (argc < 4) {
-		std::cout << "prog -g (fmitext|fmibinary|fmimaxspeedtext|fmimaxspeedbinary|sserializeoffsetarray) -t (none|distance|time|maxspeed) -c <config> -o <outfile> <infile>" << std::endl;
+		std::cout << "prog -g (fmitext|fmibinary|fmimaxspeedtext|fmimaxspeedbinary|sserializeoffsetarray|sserializelargeoffsetarray) -t (none|distance|time|maxspeed) -c <config> -o <outfile> <infile>" << std::endl;
 		return -1;
 	}
 
@@ -123,6 +123,9 @@ int main(int argc, char ** argv) {
 			else if (gtS == "sserializeoffsetarray") {
 				graphType = GT_SSERIALIZE_OFFSET_ARRAY;
 			}
+			else if (gtS == "sserializelargeoffsetarray") {
+				graphType = GT_SSERIALIZE_LARGE_OFFSET_ARRAY;
+			}
 			else if (gtS == "plot") {
 				graphType = GT_PLOT;
 			}
@@ -152,7 +155,7 @@ int main(int argc, char ** argv) {
 	}
 	
 	std::ofstream outFile;
-	if (graphType != GT_SSERIALIZE_OFFSET_ARRAY) {
+	if (graphType != GT_SSERIALIZE_OFFSET_ARRAY && graphType != GT_SSERIALIZE_LARGE_OFFSET_ARRAY) {
 		outFile.open(outFileName);
 		if (!outFile.is_open()) {
 			std::cout << "Failed to open out file " << outFileName << std::endl;
@@ -187,7 +190,10 @@ int main(int argc, char ** argv) {
 		graphWriter.reset(new FmiMaxSpeedTextGraphWriter(outFile));
 		break;
 	case GT_SSERIALIZE_OFFSET_ARRAY:
-		graphWriter.reset(new RamGraphWriter());
+		graphWriter.reset( new RamGraphWriter( sserialize::UByteArrayAdapter::createFile(0, outFileName) ) );
+		break;
+	case GT_SSERIALIZE_LARGE_OFFSET_ARRAY:
+		graphWriter.reset( new StaticGraphWriter( sserialize::UByteArrayAdapter::createFile(0, outFileName) ) );
 		break;
 	case GT_PLOT:
 		graphWriter.reset( new PlotGraph(outFile) );
@@ -230,7 +236,7 @@ int main(int argc, char ** argv) {
 		}
 	}
 	
-	if (graphType == GT_SSERIALIZE_OFFSET_ARRAY) {
+	if (graphType == GT_SSERIALIZE_OFFSET_ARRAY || graphType == GT_SSERIALIZE_LARGE_OFFSET_ARRAY) {
 		NodeDegreeProcessor nodeDegreeProcessor(state);
 		inFile.dataSeek(0);
 		WayParser wayParser("Processing ways", inFile, state->cfg.hwTagIds);
@@ -238,8 +244,18 @@ int main(int argc, char ** argv) {
 	}
 	
 	{//write the nodes out
+		state->nodeCoordinates.reserve(state->nodes.size());
+		graphWriter->beginGraph();
+		graphWriter->beginHeader();
 		graphWriter->writeHeader(state->nodes.size(), edgeCount);
-		graphWriter->writeNodes(state->nodes.begin(), state->nodes.end());
+		graphWriter->endHeader();
+		graphWriter->beginNodes();
+		for(const Node & node : state->nodes) {
+			graphWriter->writeNode(node);
+			state->nodeCoordinates.push_back(node.coordinates);
+		}
+		graphWriter->endNodes();
+		state->nodes = std::vector<Node>();
 	}
 
 	{
@@ -262,16 +278,11 @@ int main(int argc, char ** argv) {
 		FinalWayProcessor finalWayProcessor(state, graphWriter, weightCalculator);
 		inFile.dataSeek(0);
 		WayParser wayParser("Processing ways", inFile, state->cfg.hwTagIds);
+		graphWriter->beginEdges();
 		wayParser.parse(finalWayProcessor);
+		graphWriter->endEdges();
 	}
-	
-	if (graphType == osm::graphtools::creator::GT_SSERIALIZE_OFFSET_ARRAY) {
-		sserialize::UByteArrayAdapter outFile( sserialize::UByteArrayAdapter::createFile(100*state->nodes.size()+ sserialize::SerializationInfo<osm::graphs::ram::Edge>::length*edgeCount, outFileName) );
-		static_cast<RamGraphWriter*>( graphWriter.get() )->graph().serialize(outFile);
-		if (outFile.tellPutPtr() < outFile.size()) {
-			outFile.shrinkStorage( outFile.size() - outFile.tellPutPtr() );
-		}
-	}
+	graphWriter->endGraph();
 
 	inFile.close();
 

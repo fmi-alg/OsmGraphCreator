@@ -8,6 +8,8 @@ namespace osm {
 namespace graphs {
 namespace ram {
 
+Node::Node(sserialize::UByteArrayAdapter data) {data >> edgesBegin >> edgeCount >> coords; }
+
 void RamGraph::serialize(sserialize::UByteArrayAdapter & dest) const {
 	dest.reserveFromPutPtr(100*nodes().size()+20*edges().size());
 	if (! nodes().size())

@@ -14,7 +14,7 @@ namespace creator {
 
 enum OneWayStatus {OW_YES, OW_NO, OW_IMPLICIT};
 enum WeightCalculatorType {WC_NONE, WC_DISTANCE, WC_TIME, WC_MAXSPEED};
-enum GraphType {GT_FMI_TEXT, GT_FMI_BINARY, GT_FMI_MAXSPEED_BINARY, GT_FMI_MAXSPEED_TEXT, GT_SSERIALIZE_OFFSET_ARRAY, GT_PLOT};
+enum GraphType {GT_FMI_TEXT, GT_FMI_BINARY, GT_FMI_MAXSPEED_BINARY, GT_FMI_MAXSPEED_TEXT, GT_SSERIALIZE_OFFSET_ARRAY, GT_PLOT, GT_SSERIALIZE_LARGE_OFFSET_ARRAY};
 
 struct Coordinates {
 	Coordinates() {}
@@ -65,12 +65,12 @@ struct State {
 	} cfg;
 	sserialize::DirectHugheHash<uint32_t> osmIdToMyNodeId;
 	std::unordered_set<int64_t> invalidWays;
-	std::vector<Node> nodes;
+	std::vector<Coordinates> nodeCoordinates;
+	std::vector<Node> nodes; //this is only temporarily valid and gets deleted after writing out the nodes
 };
 
 typedef std::shared_ptr<State> StatePtr;
 
 }}}//end namespace
-
 
 #endif

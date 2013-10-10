@@ -174,7 +174,7 @@ void FmiMaxSpeedBinaryGraphWriter::writeEdge(const Edge & e) {
 	out().write(e.carryover.c_str(), e.carryover.size());
 }
 
-RamGraphWriter::RamGraphWriter() : m_edgeBegin(0) {}
+RamGraphWriter::RamGraphWriter(const sserialize::UByteArrayAdapter & data) : m_data(data), m_edgeBegin(0) {}
 
 RamGraphWriter::~RamGraphWriter() {}
 
@@ -186,7 +186,7 @@ void RamGraphWriter::writeHeader(uint64_t nodeCount, uint64_t edgeCount) {
 }
 
 void RamGraphWriter::writeNode(const graphtools::creator::Node & node) {
-	m_graph.nodes().push_back( osm::graphs::ram::Node(m_edgeBegin, node.outdegree) );
+	m_graph.nodes().push_back( osm::graphs::ram::Node(m_edgeBegin, node.outdegree, node.coordinates.lat, node.coordinates.lon) );
 	m_edgeBegin += node.outdegree;
 }
 
@@ -199,6 +199,14 @@ void RamGraphWriter::writeEdge(const graphtools::creator::Edge & edge) {
 	gedge.type = edge.type;
 }
 
+void RamGraphWriter::endGraph() {
+	m_data.resize(100*graph().nodes().size()+ sserialize::SerializationInfo<osm::graphs::ram::Edge>::length*graph().edges().size());
+	graph().serialize(m_data);
+	if (m_data.tellPutPtr() < m_data.size()) {
+		m_data.shrinkStorage( m_data.size() - m_data.tellPutPtr() );
+	}
+}
+
 PlotGraph::PlotGraph(std::ostream & out) : m_out(out) {}
 PlotGraph::~PlotGraph() {}
 void PlotGraph::writeHeader(uint64_t nodeCount, uint64_t edgeCount) {
@@ -209,6 +217,36 @@ void PlotGraph::writeNode(const graphtools::creator::Node & node) {
 }
 void PlotGraph::writeEdge(const graphtools::creator::Edge & edge) {
 	out() <<  m_nodes[edge.source].lon << " " << m_nodes[edge.source].lat << " " << m_nodes[edge.target].lon << " " << m_nodes[edge.target].lat << std::endl;
+}
+
+StaticGraphWriter::StaticGraphWriter(const sserialize::UByteArrayAdapter & data) : m_data(data) {}
+StaticGraphWriter::~StaticGraphWriter() {}
+
+void StaticGraphWriter::writeHeader(uint64_t nodeCount, uint64_t edgeCount) {
+	sserialize::UByteArrayAdapter::OffsetType nodeSpaceUsage = sserialize::Static::DynamicFixedLengthVector<osm::graphs::ram::Node>::spaceUsage(nodeCount);
+	sserialize::UByteArrayAdapter::OffsetType edgeSpaceUsage = sserialize::Static::DynamicFixedLengthVector<osm::graphs::ram::Edge>::spaceUsage(edgeCount);
+	m_data.resize(nodeSpaceUsage + edgeSpaceUsage);
+	m_nodes = sserialize::Static::DynamicFixedLengthVector<osm::graphs::ram::Node>(m_data);
+	m_edges = sserialize::Static::DynamicFixedLengthVector<osm::graphs::ram::Edge>(m_data+nodeSpaceUsage);
+	m_edges.resize(edgeCount);
+	m_edgeBegin = 0;
+	m_edgeOffsets.reserve(nodeCount);
+	
+}
+void StaticGraphWriter::writeNode(const graphtools::creator::Node & node) {
+	m_nodes.push_back(osm::graphs::ram::Node(m_edgeBegin, node.outdegree, node.coordinates.lat, node.coordinates.lon) );
+	m_edgeOffsets.push_back(m_edgeBegin);
+	m_edgeBegin += node.outdegree;
+}
+
+void StaticGraphWriter::writeEdge(const graphtools::creator::Edge & edge) {
+	uint32_t & ef = m_edgeOffsets[edge.source];
+	osm::graphs::ram::Edge oed;
+	oed.dest = edge.target;
+	oed.weight = edge.weight;
+	oed.type = edge.type;
+	m_edges.set(ef, oed);
+	++ef;
 }
 
 }}}//end namespace
