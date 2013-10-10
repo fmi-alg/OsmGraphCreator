@@ -231,7 +231,6 @@ void StaticGraphWriter::writeHeader(uint64_t nodeCount, uint64_t edgeCount) {
 	m_edges.resize(edgeCount);
 	m_edgeBegin = 0;
 	m_edgeOffsets.reserve(nodeCount);
-	
 }
 void StaticGraphWriter::writeNode(const osm::graphtools::creator::Node & node, const osm::graphtools::creator::Coordinates & coordinates) {
 	m_nodes.push_back(osm::graphs::ram::Node(m_edgeBegin, node.outdegree, coordinates.lat, coordinates.lon) );

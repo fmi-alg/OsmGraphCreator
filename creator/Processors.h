@@ -32,11 +32,11 @@ inline void gatherNodes(osmpbf::OSMFileIn & inFile, std::unordered_set<int64_t> 
 	uint32_t nodeId = 0;
 	inFile.dataSeek(0);
 	sserialize::ProgressInfo progress;
-	progress.begin(inFile.dataSize(), "Gathering nodes");
+	progress.begin(nodeRefs.size(), "Gathering nodes");
 	while (inFile.parseNextBlock(pbi) && nodeRefs.size()) {
 		if (pbi.isNull())
 			continue;
-		progress(inFile.dataPosition());
+		progress(nodeId);
 
 		if (pbi.nodesSize()) {
 			for (osmpbf::INodeStream node = pbi.getNodeStream(); !node.isNull(); node.next()) {

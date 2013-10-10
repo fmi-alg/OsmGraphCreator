@@ -72,7 +72,7 @@ int main(int argc, char ** argv) {
 	std::string outFileName;
 	StatePtr state(new State());
 	WeightCalculatorType wcType = WC_DISTANCE;
-	GraphType graphType = GT_FMI_TEXT;
+	GraphType graphType = GT_NONE;
 	int64_t hugheHashMapPopulate = -1;
 	
 	
