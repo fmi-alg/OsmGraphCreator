@@ -66,10 +66,10 @@ void FmiTextGraphWriter::writeHeader(uint64_t nodeCount, uint64_t edgeCount) {
 	out() << edgeCount << std::endl;
 }
 
-void FmiTextGraphWriter::writeNode(const Node & n) {
-	out() << n.id << " " << n.osmId<< " " << n.coordinates.lat << " " << n.coordinates.lon << " " << n.elev << " " << n.stringCarryOverSize << " ";
-	if (n.stringCarryOverSize)
-		out().write(n.stringCarryOverData, n.stringCarryOverSize);
+void FmiTextGraphWriter::writeNode(const osm::graphtools::creator::Node & node, const osm::graphtools::creator::Coordinates & coordinates) {
+	out() << node.id << " " << node.osmId<< " " << coordinates.lat << " " << coordinates.lon << " " << node.elev << " " << node.stringCarryOverSize << " ";
+	if (node.stringCarryOverSize)
+		out().write(node.stringCarryOverData, node.stringCarryOverSize);
 	out() << std::endl;
 }
 
@@ -131,14 +131,14 @@ void FmiBinaryGraphWriter::writeHeader(uint64_t nodeCount, uint64_t edgeCount) {
 	putInt(edgeCount);
 }
 
-void FmiBinaryGraphWriter::writeNode(const Node & n) {
-	putInt(n.id);
-	putLong(n.osmId);
-	putDouble(n.coordinates.lat);
-	putDouble(n.coordinates.lon);
-	putInt(n.elev);
-	putInt(n.stringCarryOverSize);
-	out().write(n.stringCarryOverData, n.stringCarryOverSize);
+void FmiBinaryGraphWriter::writeNode(const osm::graphtools::creator::Node & node, const osm::graphtools::creator::Coordinates & coordinates) {
+	putInt(node.id);
+	putLong(node.osmId);
+	putDouble(coordinates.lat);
+	putDouble(coordinates.lon);
+	putInt(node.elev);
+	putInt(node.stringCarryOverSize);
+	out().write(node.stringCarryOverData, node.stringCarryOverSize);
 }
 
 void FmiBinaryGraphWriter::writeEdge(const Edge & e) {
@@ -185,8 +185,8 @@ void RamGraphWriter::writeHeader(uint64_t nodeCount, uint64_t edgeCount) {
 	m_graph.edges().resize(edgeCount);
 }
 
-void RamGraphWriter::writeNode(const graphtools::creator::Node & node) {
-	m_graph.nodes().push_back( osm::graphs::ram::Node(m_edgeBegin, node.outdegree, node.coordinates.lat, node.coordinates.lon) );
+void RamGraphWriter::writeNode(const osm::graphtools::creator::Node & node, const osm::graphtools::creator::Coordinates & coordinates) {
+	m_graph.nodes().push_back( osm::graphs::ram::Node(m_edgeBegin, node.outdegree, coordinates.lat, coordinates.lon) );
 	m_edgeBegin += node.outdegree;
 }
 
@@ -212,8 +212,8 @@ PlotGraph::~PlotGraph() {}
 void PlotGraph::writeHeader(uint64_t nodeCount, uint64_t edgeCount) {
 	m_nodes.reserve(nodeCount);
 }
-void PlotGraph::writeNode(const graphtools::creator::Node & node) {
-	m_nodes.push_back(node.coordinates);
+void PlotGraph::writeNode(const osm::graphtools::creator::Node & node, const osm::graphtools::creator::Coordinates & coordinates) {
+	m_nodes.push_back(coordinates);
 }
 void PlotGraph::writeEdge(const graphtools::creator::Edge & edge) {
 	out() <<  m_nodes[edge.source].lon << " " << m_nodes[edge.source].lat << " " << m_nodes[edge.target].lon << " " << m_nodes[edge.target].lat << std::endl;
@@ -233,8 +233,8 @@ void StaticGraphWriter::writeHeader(uint64_t nodeCount, uint64_t edgeCount) {
 	m_edgeOffsets.reserve(nodeCount);
 	
 }
-void StaticGraphWriter::writeNode(const graphtools::creator::Node & node) {
-	m_nodes.push_back(osm::graphs::ram::Node(m_edgeBegin, node.outdegree, node.coordinates.lat, node.coordinates.lon) );
+void StaticGraphWriter::writeNode(const osm::graphtools::creator::Node & node, const osm::graphtools::creator::Coordinates & coordinates) {
+	m_nodes.push_back(osm::graphs::ram::Node(m_edgeBegin, node.outdegree, coordinates.lat, coordinates.lon) );
 	m_edgeOffsets.push_back(m_edgeBegin);
 	m_edgeBegin += node.outdegree;
 }

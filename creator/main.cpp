@@ -257,8 +257,7 @@ int main(int argc, char ** argv) {
 		sserialize::ProgressInfo info;
 		info.begin(state->nodes.size(), "Writing out nodes");
 		for(std::size_t i = 0, s = state->nodes.size(); i < s; ++i) {
-			graphWriter->writeNode(state->nodes[i]);
-			state->nodeCoordinates.push_back(state->nodes[i].coordinates);
+			graphWriter->writeNode(state->nodes[i], state->nodeCoordinates[i]);
 		}
 		info.end();
 		graphWriter->endNodes();

@@ -21,7 +21,7 @@ struct GraphWriter {
 	virtual void endGraph() {}
 
 	virtual void writeHeader(uint64_t nodeCount, uint64_t edgeCount) = 0;
-	virtual void writeNode(const Node & node) = 0;
+	virtual void writeNode(const Node & node, const Coordinates & coordinates) = 0;
 	virtual void writeEdge(const Edge & edge) = 0;
 	template<typename TIterator>
 	void writeNodes(TIterator begin, TIterator end) {
@@ -54,7 +54,7 @@ public:
 	FmiTextGraphWriter(std::ostream & out);
 	virtual ~FmiTextGraphWriter();
 	virtual void writeHeader(uint64_t nodeCount, uint64_t edgeCount);
-	virtual void writeNode(const Node & node);
+	virtual void writeNode(const Node & node, const Coordinates & coordinates);
 	virtual void writeEdge(const Edge & edge);
 };
 
@@ -78,7 +78,7 @@ public:
 	void putLong(int64_t v);
 	void putDouble(double v);
 	virtual void writeHeader(uint64_t nodeCount, uint64_t edgeCount);
-	virtual void writeNode(const Node & node);
+	virtual void writeNode(const Node & node, const Coordinates & coordinates);
 	virtual void writeEdge(const Edge & edge);
 };
 
@@ -100,7 +100,7 @@ public:
 	virtual void endGraph();
 	osm::graphs::ram::RamGraph & graph();
 	virtual void writeHeader(uint64_t nodeCount, uint64_t edgeCount);
-	virtual void writeNode(const graphtools::creator::Node & node);
+	virtual void writeNode(const graphtools::creator::Node & node, const Coordinates & coordinates);
 	virtual void writeEdge(const graphtools::creator::Edge & edge);
 };
 
@@ -115,7 +115,7 @@ public:
 	StaticGraphWriter(const sserialize::UByteArrayAdapter & data);
 	virtual ~StaticGraphWriter();
 	virtual void writeHeader(uint64_t nodeCount, uint64_t edgeCount);
-	virtual void writeNode(const graphtools::creator::Node & node);
+	virtual void writeNode(const graphtools::creator::Node & node, const Coordinates & coordinates);
 	virtual void writeEdge(const graphtools::creator::Edge & edge);
 };
 
@@ -129,7 +129,7 @@ public:
 	PlotGraph(std::ostream & out);
 	virtual ~PlotGraph();
 	virtual void writeHeader(uint64_t nodeCount, uint64_t edgeCount);
-	virtual void writeNode(const graphtools::creator::Node & node);
+	virtual void writeNode(const graphtools::creator::Node & node, const Coordinates & coordinates);
 	virtual void writeEdge(const graphtools::creator::Edge & edge);
 };
 

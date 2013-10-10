@@ -26,11 +26,10 @@ struct Coordinates {
 //[Id] [osmId] [lat] [lon] [elevation] [carryover] //Knoten
 struct Node {
 	Node() {}
-	Node(uint32_t id, int64_t osmId, const Coordinates & coordinates, uint16_t elev) :
-	id(id), osmId(osmId), coordinates(coordinates), elev(elev), indegree(0), outdegree(0), stringCarryOverSize(0), stringCarryOverData(0) {}
+	Node(uint32_t id, int64_t osmId, uint16_t elev) :
+	id(id), osmId(osmId), elev(elev), indegree(0), outdegree(0), stringCarryOverSize(0), stringCarryOverData(0) {}
 	uint32_t id;
 	int64_t osmId;
-	Coordinates coordinates;
 	uint16_t elev;
 	uint16_t indegree;
 	uint16_t outdegree;

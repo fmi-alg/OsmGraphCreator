@@ -27,13 +27,13 @@ inline bool isUndirectedEdge(const std::unordered_set<int> & implicitOneWay, int
 	return true;
 }
 
-void gatherNodes(osmpbf::OSMFileIn & inFile, std::unordered_set<int64_t> & nodeRefs, StatePtr state) {
+inline void gatherNodes(osmpbf::OSMFileIn & inFile, std::unordered_set<int64_t> & nodeRefs, StatePtr state) {
 	osmpbf::PrimitiveBlockInputAdaptor pbi;
 	uint32_t nodeId = 0;
 	inFile.dataSeek(0);
 	sserialize::ProgressInfo progress;
 	progress.begin(inFile.dataSize(), "Gathering nodes");
-	while (inFile.parseNextBlock(pbi)) {
+	while (inFile.parseNextBlock(pbi) && nodeRefs.size()) {
 		if (pbi.isNull())
 			continue;
 		progress(inFile.dataPosition());
@@ -43,8 +43,9 @@ void gatherNodes(osmpbf::OSMFileIn & inFile, std::unordered_set<int64_t> & nodeR
 				int64_t osmId = node.id();
 				if (nodeRefs.count(osmId) ) {
 					nodeRefs.erase(osmId);
-					Node n(nodeId, osmId, Coordinates(node.latd(), node.lond()), 0);
+					Node n(nodeId, osmId, 0);
 					state->nodes.push_back(n);
+					state->nodeCoordinates.push_back(Coordinates(node.latd(), node.lond()));
 					++nodeId;
 					state->osmIdToMyNodeId[n.osmId] = n.id;
 				}
