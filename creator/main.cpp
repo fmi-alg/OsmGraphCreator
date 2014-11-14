@@ -63,7 +63,7 @@ bool findNodeIdBounds(osmpbf::OSMFileIn & inFile, uint64_t & smallestId, uint64_
 
 int main(int argc, char ** argv) {
 	if (argc < 4) {
-		std::cout << "prog -g (fmitext|fmibinary|fmimaxspeedtext|fmimaxspeedbinary|sserializeoffsetarray|sserializelargeoffsetarray) -t (none|distance|time|maxspeed) -c <config> -o <outfile> <infile>" << std::endl;
+		std::cout << "USAGE: -g (fmitext|fmibinary|fmimaxspeedtext|fmimaxspeedbinary|sserializeoffsetarray|sserializelargeoffsetarray) -t (none|distance|time|maxspeed) -c <config> -o <outfile> <infile>" << std::endl;
 		return -1;
 	}
 
