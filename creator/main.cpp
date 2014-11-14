@@ -43,9 +43,10 @@ bool findNodeIdBounds(osmpbf::OSMFileIn & inFile, uint64_t & smallestId, uint64_
 				continue;
 			if (pbi.waysSize()) {
 				for (osmpbf::IWayStream way = pbi.getWayStream(); !way.isNull(); way.next()) {
-					for(int i = 0, s = way.refsSize(); i < s; ++i) {
-						tempLargestId = std::max<int64_t>(tempLargestId, way.ref(i));
-						tempSmallestId = std::min<int64_t>(tempSmallestId, way.ref(i));
+					for(osmpbf::IWayStream::RefIterator it(way.refBegin()), end(way.refEnd()); it != end; ++it) {
+						int64_t refId = *it;
+						tempLargestId = std::max<int64_t>(tempLargestId, refId);
+						tempSmallestId = std::min<int64_t>(tempSmallestId, refId);
 					}
 				}
 			}
@@ -218,7 +219,7 @@ int main(int argc, char ** argv) {
 				findNodeIdBounds(inFile, smallestId, largestId);
 				if (hugheHashMapPopulate != 0)
 					largestId = std::min<uint64_t>(smallestId+hugheHashMapPopulate, largestId);
-				state->osmIdToMyNodeId = sserialize::DirectHugheHash<uint32_t>(smallestId, largestId, true);
+				state->osmIdToMyNodeId = State::OsmIdToMyNodeIdHashMap(smallestId, largestId, sserialize::MM_SHARED_MEMORY);
 			}
 		
 			inFile.dataSeek(0);

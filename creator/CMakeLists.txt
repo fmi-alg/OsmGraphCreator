@@ -3,18 +3,16 @@ project(creator)
 include_directories(${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_SOURCE_DIR})
 find_package(Protobuf REQUIRED)
 find_package(ZLIB REQUIRED)
-find_package(GeographicLib REQUIRED)
 find_package(Ragel REQUIRED)
+find_package(LIBRT REQUIRED)
 
 set(DEFAULT_INCLUDE_DIRS
 	${PROTOBUF_INCLUDE_DIRS}
 	${ZLIB_INCLUDE_DIRS}
-	${GeographicLib_INCLUDE_DIRS}
 	${PROJECT_GLOBAL_SOURCE_DIR}
 	${CMAKE_CURRENT_BINARY_DIR}
 	${CMAKE_CURRENT_SOURCE_DIR}
 	${CMAKE_SOURCE_DIR}
-	${CMAKE_SOURCE_DIR}/vendor/osmpbf
 )
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c99 -Wall")
@@ -31,7 +29,7 @@ ${osmpbf_BINARY_DIR}/libosmpbf.a
 ${sserialize_BINARY_DIR}/libsserialize.a
 ${PROTOBUF_LIBRARIES}
 ${ZLIB_LIBRARIES}
-${GeographicLib_LIBRARIES}
+${LIBRT_LIBRARIES}
 )
 
 set(SOURCES_CPP

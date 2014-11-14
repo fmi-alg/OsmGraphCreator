@@ -62,6 +62,22 @@ public:
 	void serialize(sserialize::UByteArrayAdapter & dest) const;
 };
 
+inline sserialize::UByteArrayAdapter & operator<<(sserialize::UByteArrayAdapter & dest, const osm::graphs::ram::Node::Coordinates & coords) {
+	return dest << coords.lat << coords.lon;
+}
+
+inline sserialize::UByteArrayAdapter & operator>>(sserialize::UByteArrayAdapter & dest, osm::graphs::ram::Node::Coordinates & coords) {
+	return dest >> coords.lat >> coords.lon;
+}
+
+inline sserialize::UByteArrayAdapter & operator<<(sserialize::UByteArrayAdapter & dest, const osm::graphs::ram::Node & node) {
+	return dest << node.edgesBegin << node.edgeCount << node.coords;
+}
+
+inline sserialize::UByteArrayAdapter & operator<<(sserialize::UByteArrayAdapter & dest, const osm::graphs::ram::Edge & edge) {
+	return dest << edge.dest << edge.weight << edge.type;
+}
+
 }}}//end namespace
 
 namespace sserialize {
@@ -93,22 +109,6 @@ struct SerializationInfo<osm::graphs::ram::Edge> {
 	static inline OffsetType sizeInBytes(const osm::graphs::ram::Edge & value) { return length; }
 };
 
-}
-
-inline sserialize::UByteArrayAdapter & operator<<(sserialize::UByteArrayAdapter & dest, const osm::graphs::ram::Node::Coordinates & coords) {
-	return dest << coords.lat << coords.lon;
-}
-
-inline sserialize::UByteArrayAdapter & operator>>(sserialize::UByteArrayAdapter & dest, osm::graphs::ram::Node::Coordinates & coords) {
-	return dest >> coords.lat >> coords.lon;
-}
-
-inline sserialize::UByteArrayAdapter & operator<<(sserialize::UByteArrayAdapter & dest, const osm::graphs::ram::Node & node) {
-	return dest << node.edgesBegin << node.edgeCount << node.coords;
-}
-
-inline sserialize::UByteArrayAdapter & operator<<(sserialize::UByteArrayAdapter & dest, const osm::graphs::ram::Edge & edge) {
-	return dest << edge.dest << edge.weight << edge.type;
 }
 
 #endif

@@ -1,5 +1,4 @@
 #include "WeightCalculator.h"
-#include <GeographicLib/Geodesic.hpp>
 
 namespace osm {
 namespace graphtools {
@@ -17,7 +16,7 @@ int GeodesicDistanceWeightCalculator::calc(const osm::graphtools::creator::Edge 
 	double length;
 	const Coordinates & src = state->nodeCoordinates[edge.source];
 	const Coordinates & dest = state->nodeCoordinates[edge.target];
-	GeographicLib::Geodesic::WGS84.Inverse(src.lat, src.lon, dest.lat, dest.lon, length);
+	length = distCalc.calc(src.lat, src.lon, dest.lat, dest.lon);
 	return length;
 }
 
@@ -25,7 +24,7 @@ int WeightedGeodesicDistanceWeightCalculator::calc(const osm::graphtools::creato
 	double length;
 	const Coordinates & src = state->nodeCoordinates[edge.source];
 	const Coordinates & dest = state->nodeCoordinates[edge.target];
-	GeographicLib::Geodesic::WGS84.Inverse(src.lat, src.lon, dest.lat, dest.lon, length);
+	length = distCalc.calc(src.lat, src.lon, dest.lat, dest.lon);
 	return length*typeToWeight->at(edge.type);
 };
 
@@ -33,7 +32,7 @@ int MaxSpeedGeodesicDistanceWeightCalculator::calc(const Edge & edge) {
 	double length;
 	const Coordinates & src = state->nodeCoordinates[edge.source];
 	const Coordinates & dest = state->nodeCoordinates[edge.target];
-	GeographicLib::Geodesic::WGS84.Inverse(src.lat, src.lon, dest.lat, dest.lon, length);
+	length = distCalc.calc(src.lat, src.lon, dest.lat, dest.lon);
 	return length*3600/edge.maxspeed;
 }
 

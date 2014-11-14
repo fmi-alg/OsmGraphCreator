@@ -1,10 +1,10 @@
 #ifndef OSM_GRAPH_TOOLS_PROCESSORS_H
 #define OSM_GRAPH_TOOLS_PROCESSORS_H
-#include <vendor/osmpbf/osmfile.h>
-#include <vendor/osmpbf/iway.h>
-#include <vendor/osmpbf/inode.h>
-#include <vendor/osmpbf/filter.h>
-#include <vendor/osmpbf/primitiveblockinputadaptor.h>
+#include <osmpbf/osmfile.h>
+#include <osmpbf/iway.h>
+#include <osmpbf/inode.h>
+#include <osmpbf/filter.h>
+#include <osmpbf/primitiveblockinputadaptor.h>
 #include "types.h"
 #include "conversion.h"
 #include "GraphWriter.h"

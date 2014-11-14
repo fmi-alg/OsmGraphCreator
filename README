@@ -1,7 +1,6 @@
 You need:
 cmake
 google protobuf
-geographiclib
 zlib
 
 Builing:

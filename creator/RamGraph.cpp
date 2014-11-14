@@ -2,7 +2,7 @@
 #include <sserialize/containers/MultiVarBitArray.h>
 #include <sserialize/utility/utilmath.h>
 #include <sserialize/utility/ProgressInfo.h>
-#include <sserialize/Static/Deque.h>
+#include <sserialize/Static/Array.h>
 
 namespace osm {
 namespace graphs {
@@ -32,7 +32,7 @@ void RamGraph::serialize(sserialize::UByteArrayAdapter & dest) const {
 	std::cout << "done" << std::endl;
 	
 	{
-		sserialize::Static::DequeCreator<Node::Coordinates> payloadCreator(dest);
+		sserialize::Static::ArrayCreator<Node::Coordinates> payloadCreator(dest);
 		info.begin(nodes().size(), "Creating node payload vector");
 		for(std::size_t i = 0, s = nodes().size(); i < s; ++i) {
 			const Node & node = nodes()[i];
