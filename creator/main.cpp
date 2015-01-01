@@ -63,10 +63,10 @@ bool findNodeIdBounds(osmpbf::OSMFileIn & inFile, uint64_t & smallestId, uint64_
 
 void help() {
 	std::cout << "USAGE: -g (fmitext|fmibinary|fmimaxspeedtext|fmimaxspeedbinary|sserializeoffsetarray|sserializelargeoffsetarray|plot) -t (none|distance|time|maxspeed) -c <config> -o <outfile> <infile>" << std::endl;
-	std::cout << "\
-	where -g selects the output type. fmi(text|binary) is specified by https://theogit.fmi.uni-stuttgart.de/hartmafk/fmigraph/wikis/types \
-	-t select the cost function of edges, maxspeed according to tag if specified, otherwise as defined in the config \
-	-c path to to config (see sample configs)";
+	std::cout << "<where \n \
+	-g selects the output type. fmi(text|binary) is specified by https://theogit.fmi.uni-stuttgart.de/hartmafk/fmigraph/wikis/types \n \
+	-t select the cost function of edges, maxspeed according to tag if specified, otherwise as defined in the config \n \
+	-c path to to config (see sample configs)" << std::endl;
 }
 
 
