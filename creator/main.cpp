@@ -23,7 +23,18 @@ bool readConfig(const std::string & fileName, State::Configuration & cfg) {
 		std::getline(inFile, value);
 		std::getline(inFile, typeId);
 		std::getline(inFile, weight);
-		
+		if (value.size() == 0) {
+			std::cout << "Empty value in confi" << std::endl;
+			return false;
+		}
+		if (typeId.size() == 0) {
+			std::cout << "Empty typeId in confi" << std::endl;
+			return false;
+		}
+		if (weight.size() == 0) {
+			std::cout << "Empty weight in confi" << std::endl;
+			return false;
+		}
 		int id = atoi(typeId.c_str());
 		cfg.hwTagIds[value] = id;
 		cfg.typeToWeight[id] = 360.0 / atof(weight.c_str()); // 100 / ( (w*1000)/3600 )
@@ -174,6 +185,7 @@ int main(int argc, char ** argv) {
 	
 	if (!readConfig(configFileName, state->cfg)) {
 		std::cout << "Failed to read config" << std::endl;
+		return -1;
 	}
 	else {
 		std::cout << "Found " << state->cfg.hwTagIds.size() << " config entries" << std::endl;
