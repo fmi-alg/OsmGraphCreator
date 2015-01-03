@@ -150,13 +150,13 @@ struct RefGatherProcessor {
 };
 
 struct InvalidWayMarkingProcessor {
-	InvalidWayMarkingProcessor(StatePtr state, std::shared_ptr< std::unordered_set<int64_t> > nodeRefs, uint64_t * edgeCount) :
-	state(state), nodeRefs(nodeRefs), edgeCount(edgeCount)
+	InvalidWayMarkingProcessor(StatePtr state, std::shared_ptr< std::unordered_set<int64_t> > unfetchedNodeRefs, uint64_t * edgeCount) :
+	state(state), unfetchedNodeRefs(unfetchedNodeRefs), edgeCount(edgeCount)
 	{
 	}
 	
 	StatePtr state;
-	std::shared_ptr< std::unordered_set<int64_t> > nodeRefs;
+	std::shared_ptr< std::unordered_set<int64_t> > unfetchedNodeRefs;
 	uint64_t * edgeCount;
 
 	std::unordered_set<std::string> kS;
@@ -165,7 +165,7 @@ struct InvalidWayMarkingProcessor {
 	inline void operator()(int ows, int hwType, const std::unordered_map<std::string, std::string> & storedKv, const osmpbf::IWay & way) {
 		bool invalid = false;
 		for(osmpbf::IWayStream::RefIterator refIt(way.refBegin()), refEnd(way.refEnd()); refIt != refEnd; ++refIt) {
-			if (!nodeRefs->count(*refIt)) {
+			if (unfetchedNodeRefs->count(*refIt)) {
 				invalid = true;
 				break;
 			}

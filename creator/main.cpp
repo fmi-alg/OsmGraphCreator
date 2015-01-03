@@ -237,6 +237,7 @@ int main(int argc, char ** argv) {
 		}
 		state->nodes.reserve(nodeRefs->size());
 		gatherNodes(inFile, *nodeRefs, state);
+		//nodeRefs now holds all node refs that could not be fetched!
 		
 
 		if (nodeRefs->size()) { //check if we have to mark some ways invalid
