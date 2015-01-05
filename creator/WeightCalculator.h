@@ -37,7 +37,6 @@ struct MaxSpeedGeodesicDistanceWeightCalculator: public WeightCalculator {
 	MaxSpeedGeodesicDistanceWeightCalculator(StatePtr state) : state(state) {}
 	StatePtr state;
 	sserialize::spatial::detail::GeodesicDistanceCalculator distCalc;
-	std::shared_ptr< std::unordered_map<int, double> > typeToWeight;
 	
 	virtual int calc(const Edge & edge);
 };

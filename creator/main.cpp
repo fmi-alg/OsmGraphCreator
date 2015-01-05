@@ -293,7 +293,7 @@ int main(int argc, char ** argv) {
 			weightCalculator.reset(new NoWeightCalculator());
 			break;
 		case WC_TIME:
-			weightCalculator.reset(new GeodesicDistanceWeightCalculator(state));
+			weightCalculator.reset(new WeightedGeodesicDistanceWeightCalculator(state));
 			break;
 		case WC_MAXSPEED:
 			weightCalculator.reset(new MaxSpeedGeodesicDistanceWeightCalculator(state));

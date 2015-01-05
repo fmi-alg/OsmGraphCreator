@@ -25,7 +25,7 @@ int WeightedGeodesicDistanceWeightCalculator::calc(const osm::graphtools::creato
 	const Coordinates & src = state->nodeCoordinates[edge.source];
 	const Coordinates & dest = state->nodeCoordinates[edge.target];
 	length = distCalc.calc(src.lat, src.lon, dest.lat, dest.lon);
-	return length*typeToWeight->at(edge.type);
+	return length*state->cfg.typeToWeight.at(edge.type);
 };
 
 int MaxSpeedGeodesicDistanceWeightCalculator::calc(const Edge & edge) {
