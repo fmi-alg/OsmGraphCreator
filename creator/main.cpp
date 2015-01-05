@@ -181,6 +181,7 @@ int main(int argc, char ** argv) {
 			std::cout << "Failed to open out file " << outFileName << std::endl;
 			return -1;
 		}
+		outFile << std::fixed << std::setprecision(std::numeric_limits<double>::digits10 + 2);
 	}
 	
 	if (!readConfig(configFileName, state->cfg)) {
