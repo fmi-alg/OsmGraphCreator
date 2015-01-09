@@ -61,7 +61,7 @@ void FmiTextGraphWriter::writeHeader(uint64_t nodeCount, uint64_t edgeCount) {
 	out() << "# Id : 0\n";
 	out() << "# Timestamp : " << time(0) << "\n";
 	out() << "# Type : standard" << "\n";
-	out() << "# Revision: 1 " << "\n\n";
+	out() << "# Revision : 1 " << "\n\n";
 	out() << nodeCount << "\n";
 	out() << edgeCount << "\n";
 }
@@ -90,7 +90,7 @@ void FmiMaxSpeedTextGraphWriter::writeHeader(uint64_t nodeCount, uint64_t edgeCo
 	out() << "# Id : 0\n";
 	out() << "# Timestamp : " << time(0) << "\n";
 	out() << "# Type : maxspeed" << "\n";
-	out() << "# Revision: 1 " << "\n\n";
+	out() << "# Revision : 1 " << "\n\n";
 	out() << nodeCount << "\n";
 	out() << edgeCount << "\n";
 }
