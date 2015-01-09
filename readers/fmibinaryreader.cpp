@@ -55,37 +55,40 @@ namespace OsmGraphWriter {
 
 FmiBinaryReader::FmiBinaryReader() {}
 FmiBinaryReader::~FmiBinaryReader() {}
-bool FmiBinaryReader::read(char * path) {
+
+void FmiBinaryReader::read(char * path) {
 	int fd = open(path, O_RDONLY);
 	off_t fileSize = 0;
 	if (fd < 0) {
-		return false;
+		throw std::runtime_error("Could not open file");
+		return;
 	}
 	struct ::stat stFileInfo;
 	if (::fstat(fd,&stFileInfo) == 0) {
 		fileSize = stFileInfo.st_size;
 	}
 	else {
-		return false;
+		throw std::runtime_error("Could not stat file");
+		return;
 	}
 
 	int param = MAP_SHARED;
-	void * data = ::mmap(0, fileSize, PROT_READ | PROT_WRITE, param, fd, 0);
+	void * data = ::mmap(0, fileSize, PROT_READ, param, fd, 0);
 
 	if (data == MAP_FAILED) {
 		::close(fd);
-		return false;
+		throw std::runtime_error("Could not mmap file");
+		return;
 	}
 	
-	bool ok = readGraph((uint8_t*)data, ((uint8_t*)data)+fileSize);
+	readGraph((char*)data, ((char*)data)+fileSize);
 	
 	::munmap(data, fileSize);
 	close(fd);
-	return ok;
 }
 
-bool FmiBinaryReader::readGraph(uint8_t * inBegin, uint8_t * end) {
-	uint8_t * it = inBegin;
+void FmiBinaryReader::readGraph(char * inBegin, char * end) {
+	char * it = inBegin;
 	GraphType gt;
 	//skip text header
 	for(uint8_t nlc = 0; it < end && nlc < 4;) {
@@ -99,15 +102,15 @@ bool FmiBinaryReader::readGraph(uint8_t * inBegin, uint8_t * end) {
 		char * tmp = new char[tmpSize+1];
 		tmp[it-inBegin] = 0;
 		memmove(tmp, inBegin, it-inBegin);
-		if (strstr(tmp, "standard") < tmp+tmpSize) {
+		if (strstr(tmp, "standard") != NULL) {
 			gt = GT_STANDARD;
 		}
-		else if (strstr(tmp, "maxspeed") < tmp+tmpSize) {
+		else if (strstr(tmp, "maxspeed") != NULL) {
 			gt = GT_MAXSPEED;
 		}
 		else {
-			std::cout << "Could not detect graph type\n";
-			return false;
+			throw std::runtime_error("Could not detect graph type");
+			return;
 		}
 	}
 	
@@ -135,11 +138,11 @@ bool FmiBinaryReader::readGraph(uint8_t * inBegin, uint8_t * end) {
 			if (it+stringCarryOverSize <= end) {
 				node(nodeId, osmId, lat, lon, elev, stringCarryOverSize, it);
 			}
-			         it += stringCarryOverSize;
+			it += stringCarryOverSize;
 		}
 		if (i < nodeCount) {
-			std::cout << "Not enough nodes\n";
-			return false;
+			throw std::runtime_error("Not enough nodes");
+			return;
 		}
 	}
 	{//edges
@@ -160,39 +163,36 @@ bool FmiBinaryReader::readGraph(uint8_t * inBegin, uint8_t * end) {
 			}
 			stringCarryOverSize = getInt32(it);
 			if (it+stringCarryOverSize <= end) {
-				node(source, target, weight, type, maxSpeed, stringCarryOverSize, it);
+				edge(source, target, weight, type, maxSpeed, stringCarryOverSize, it);
 			}
 			it += stringCarryOverSize;
 		}
 		if (i < edgeCount) {
-			std::cout << "Not enough edges\n";
-			return false;
+			throw std::runtime_error("Not enough edges");
+			return;
 		}
 	}
-	return true;
 }
 
-int32_t FmiBinaryReader::getInt32(uint8_t*& offset) {
+int32_t FmiBinaryReader::getInt32(char*& offset) {
 	int32_t tmp;
 	memmove(&tmp, offset, 4);
 	offset += 4;
 	return be32toh(tmp);
 }
 
-int64_t FmiBinaryReader::getInt64(uint8_t*& offset) {
+int64_t FmiBinaryReader::getInt64(char*& offset) {
 	int64_t tmp;
 	memmove(&tmp, offset, 8);
-	offset += 4;
+	offset += 8;
 	return be64toh(tmp);
 }
 
-double FmiBinaryReader::getDouble(uint8_t*& offset) {
-	union {
-		double d;
-		int64_t i;
-	} tmp;
-	tmp.i = getInt64(offset);
-	return tmp.d;
+double FmiBinaryReader::getDouble(char*& offset) {
+	double tmp;
+	memmove(&tmp, offset, sizeof(double));
+	offset += sizeof(double);
+	return tmp;
 }
 
 }//end namespace

@@ -1,4 +1,6 @@
 #include <iostream>
+#include <limits>
+#include <iomanip>
 #include "fmibinaryreader.h"
 
 class MyGraphReader: public OsmGraphWriter::FmiBinaryReader {
@@ -6,7 +8,7 @@ private:
 	std::ostream & out() { return std::cout; }
 	GraphType m_gt;
 public:
-	MyGraphReader() { out().precision(15); out() << std::fixed;}
+	MyGraphReader() { out() << std::fixed << std::setprecision(std::numeric_limits<double>::digits10 + 2);}
 	~MyGraphReader() {}
 	virtual void header(GraphType type, int32_t nodeCount, int32_t edgeCount) {
 		out() << "# Id : 0" << std::endl;
@@ -17,21 +19,21 @@ public:
 		out() << edgeCount << std::endl;
 		m_gt = type;
 	}
-	virtual void edge(int32_t source, int32_t target, int32_t weight, int32_t type, int32_t maxSpeed, int32_t stringCarryOverSize, const uint8_t* stringCarryOver) {
+	virtual void edge(int32_t source, int32_t target, int32_t weight, int32_t type, int32_t maxSpeed, int32_t stringCarryOverSize, const char* stringCarryOver) {
 		out() << source << " " << target << " " << weight << " " << type;
 		if (m_gt == GT_MAXSPEED) {
 			out() << " " << maxSpeed;
 		}
 		out() << " " << stringCarryOverSize << " ";
 		if (stringCarryOverSize); {
-			out().write((const char*)stringCarryOver, stringCarryOverSize);
+			out().write(stringCarryOver, stringCarryOverSize);
 		}
 		out() << "\n";
 	}
-	virtual void node(int32_t nodeId, int64_t osmId, double lat, double lon, int32_t elev, int32_t stringCarryOverSize, const uint8_t* stringCarryOver) {
+	virtual void node(int32_t nodeId, int64_t osmId, double lat, double lon, int32_t elev, int32_t stringCarryOverSize, const char* stringCarryOver) {
 		out() << nodeId << " " << osmId << " " << lat << " " << lon << " " << elev << " " << stringCarryOverSize << " ";
 		if (stringCarryOverSize) {
-			out().write((const char*)stringCarryOver, stringCarryOverSize);
+			out().write(stringCarryOver, stringCarryOverSize);
 		}
 		out() << "\n";
 	}
@@ -40,8 +42,15 @@ public:
 
 int main(int argc, char ** argv) {
 	if (argc < 2) {
-		std::cout << "Not enough arguments. Need filename\n";
+		std::cerr << "Not enough arguments. Need filename\n";
 	}
-	
-
+	MyGraphReader * gr = new MyGraphReader();
+	try {
+		gr->read(argv[1]);
+	}
+	catch (const std::exception & e) {
+		std::cerr << "Failed to read the graph: " << e.what() << std::endl;
+		return -1;
+	}
+	return 0;
 }
