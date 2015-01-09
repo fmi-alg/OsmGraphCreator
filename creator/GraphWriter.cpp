@@ -67,9 +67,10 @@ void FmiTextGraphWriter::writeHeader(uint64_t nodeCount, uint64_t edgeCount) {
 }
 
 void FmiTextGraphWriter::writeNode(const osm::graphtools::creator::Node & node, const osm::graphtools::creator::Coordinates & coordinates) {
-	out() << node.id << " " << node.osmId<< " " << coordinates.lat << " " << coordinates.lon << " " << node.elev << " " << node.stringCarryOverSize << " ";
-	if (node.stringCarryOverSize)
+	out() << node.id << " " << node.osmId << " " << coordinates.lat << " " << coordinates.lon << " " << node.elev << " " << node.stringCarryOverSize << " ";
+	if (node.stringCarryOverSize) {
 		out().write(node.stringCarryOverData, node.stringCarryOverSize);
+	}
 	out() << std::endl;
 }
 
@@ -122,11 +123,10 @@ void FmiBinaryGraphWriter::putDouble(double v) {
 }
 
 void FmiBinaryGraphWriter::writeHeader(uint64_t nodeCount, uint64_t edgeCount) {
-	out() << "# Id : 0" << std::endl;
-	out() << "# Timestamp : " << time(0) << std::endl;
-	out() << "# Type : standard" << std::endl;
-	out() << "# Revision: 1 " << std::endl;
-	out() << std::endl;
+	out() << "# Id : 0\n";
+	out() << "# Timestamp : " << time(0) << "\n";
+	out() << "# Type : standard" << "\n";
+	out() << "# Revision: 1 " << "\n";
 	putInt(nodeCount);
 	putInt(edgeCount);
 }
@@ -155,11 +155,10 @@ FmiMaxSpeedBinaryGraphWriter::FmiMaxSpeedBinaryGraphWriter(std::ostream & out) :
 FmiMaxSpeedBinaryGraphWriter::~FmiMaxSpeedBinaryGraphWriter() {}
 
 void FmiMaxSpeedBinaryGraphWriter::writeHeader(uint64_t nodeCount, uint64_t edgeCount) {
-	out() << "# Id : 0" << std::endl;
-	out() << "# Timestamp : " << time(0) << std::endl;
-	out() << "# Type : maxspeed" << std::endl;
-	out() << "# Revision: 1 " << std::endl;
-	out() << std::endl;
+	out() << "# Id : 0" << "\n";
+	out() << "# Timestamp : " << time(0) << "\n";
+	out() << "# Type : maxspeed" << "\n";
+	out() << "# Revision: 1 " << "\n";
 	putInt(nodeCount);
 	putInt(edgeCount);
 }

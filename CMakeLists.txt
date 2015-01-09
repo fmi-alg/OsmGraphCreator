@@ -36,4 +36,5 @@ add_subdirectory(vendor/osmpbf osmpbf)
 add_subdirectory(vendor/sserialize sserialize)
 add_subdirectory(creator creator)
 
-add_subdirectory(graphs)
+add_subdirectory(graphs graphs)
+add_subdirectory(readers readers)
