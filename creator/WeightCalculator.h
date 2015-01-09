@@ -37,7 +37,7 @@ struct MaxSpeedGeodesicDistanceWeightCalculator: public WeightCalculator {
 	MaxSpeedGeodesicDistanceWeightCalculator(StatePtr state) : state(state) {}
 	StatePtr state;
 	sserialize::spatial::detail::GeodesicDistanceCalculator distCalc;
-	
+	///Calulate travel time in seconds
 	virtual int calc(const Edge & edge);
 };
 
