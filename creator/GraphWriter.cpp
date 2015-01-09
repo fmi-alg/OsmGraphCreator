@@ -114,12 +114,9 @@ void FmiBinaryGraphWriter::putLong(int64_t v) {
 }
 
 void FmiBinaryGraphWriter::putDouble(double v) {
-	union {
-		double d;
-		int64_t i;
-	} tmp;
-	tmp.d = v;
-	putLong(tmp.i);
+	char tmp[sizeof(v)];
+	memcpy(tmp, &v, sizeof(v));
+	out().write(tmp, sizeof(v));
 }
 
 void FmiBinaryGraphWriter::writeHeader(uint64_t nodeCount, uint64_t edgeCount) {
