@@ -91,7 +91,7 @@ void FmiBinaryReader::readGraph(char * inBegin, char * end) {
 	char * it = inBegin;
 	GraphType gt;
 	//skip text header
-	for(uint8_t nlc = 0; it < end && nlc < 4;) {
+	for(uint8_t nlc = 0; it < end && nlc < 5;) {
 		if (*it == '\n') {
 			++nlc;
 		}

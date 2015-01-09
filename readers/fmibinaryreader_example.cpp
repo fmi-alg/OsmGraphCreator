@@ -14,7 +14,7 @@ public:
 		out() << "# Id : 0" << std::endl;
 		out() << "# Timestamp : " << time(0) << std::endl;
 		out() << "# Type : " << (type == GT_STANDARD ? "standard" : "maxspeed") << std::endl;
-		out() << "# Revision: 1 " << std::endl;
+		out() << "# Revision: 1\n\n";
 		out() << nodeCount << std::endl;
 		out() << edgeCount << std::endl;
 		m_gt = type;
@@ -24,15 +24,16 @@ public:
 		if (m_gt == GT_MAXSPEED) {
 			out() << " " << maxSpeed;
 		}
-		out() << " " << stringCarryOverSize << " ";
 		if (stringCarryOverSize); {
+			out() << " ";
 			out().write(stringCarryOver, stringCarryOverSize);
 		}
 		out() << "\n";
 	}
 	virtual void node(int32_t nodeId, int64_t osmId, double lat, double lon, int32_t elev, int32_t stringCarryOverSize, const char* stringCarryOver) {
-		out() << nodeId << " " << osmId << " " << lat << " " << lon << " " << elev << " " << stringCarryOverSize << " ";
+		out() << nodeId << " " << osmId << " " << lat << " " << lon << " " << elev;
 		if (stringCarryOverSize) {
+			out() << " ";
 			out().write(stringCarryOver, stringCarryOverSize);
 		}
 		out() << "\n";
