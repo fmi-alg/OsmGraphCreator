@@ -21,10 +21,13 @@ set(LINK_LIBS
 
 )
 
-set(SOURCES_CPP
-fmibinaryreader.cpp
-fmibinary_maxspeedreader.cpp
+set(LIB_SOURCES_CPP
+	fmibinaryreader.cpp
 )
 
-add_library("${PROJECT_NAME}" ${SOURCES_CPP})
+add_library("${PROJECT_NAME}" ${LIB_SOURCES_CPP})
 target_link_libraries("${PROJECT_NAME}" ${LINK_LIBS})
+
+add_executable(fmibinaryreader_example fmibinaryreader_example.cpp ${LIB_SOURCES_CPP})
+target_link_libraries(fmibinaryreader_example ${LINK_LIBS})
+

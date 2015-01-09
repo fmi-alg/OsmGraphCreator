@@ -49,6 +49,7 @@ static uint64_t my_htobe64(uint64_t x) {
 #include <fcntl.h>
 #include <string>
 #include <sys/stat.h>
+#include <iostream>
 
 namespace OsmGraphWriter {
 
@@ -81,6 +82,94 @@ bool FmiBinaryReader::read(char * path) {
 	::munmap(data, fileSize);
 	close(fd);
 	return ok;
+}
+
+bool FmiBinaryReader::readGraph(uint8_t * inBegin, uint8_t * end) {
+	uint8_t * it = inBegin;
+	GraphType gt;
+	//skip text header
+	for(uint8_t nlc = 0; it < end && nlc < 4;) {
+		if (*it == '\n') {
+			++nlc;
+		}
+		++it;
+	}
+	{
+		std::ptrdiff_t tmpSize = it-inBegin;
+		char * tmp = new char[tmpSize+1];
+		tmp[it-inBegin] = 0;
+		memmove(tmp, inBegin, it-inBegin);
+		if (strstr(tmp, "standard") < tmp+tmpSize) {
+			gt = GT_STANDARD;
+		}
+		else if (strstr(tmp, "maxspeed") < tmp+tmpSize) {
+			gt = GT_MAXSPEED;
+		}
+		else {
+			std::cout << "Could not detect graph type\n";
+			return false;
+		}
+	}
+	
+	//begin now points to the first "real" data
+	
+	//header
+	int32_t nodeCount = getInt32(it);
+	int32_t edgeCount = getInt32(it);
+	header(gt, nodeCount, edgeCount);
+	
+	{//nodes
+		int32_t nodeId;
+		int64_t osmId;
+		double lat, lon;
+		int32_t elev;
+		int32_t stringCarryOverSize;
+		int32_t i(0);
+		for(; i < nodeCount && it < end; ++i) {
+			nodeId = getInt32(it);
+			osmId = getInt64(it);
+			lat = getDouble(it);
+			lon = getDouble(it);
+			elev = getInt32(it);
+			stringCarryOverSize = getInt32(it);
+			if (it+stringCarryOverSize <= end) {
+				node(nodeId, osmId, lat, lon, elev, stringCarryOverSize, it);
+			}
+			         it += stringCarryOverSize;
+		}
+		if (i < nodeCount) {
+			std::cout << "Not enough nodes\n";
+			return false;
+		}
+	}
+	{//edges
+		int32_t source;
+		int32_t target;
+		int32_t weight;
+		int32_t type;
+		int32_t maxSpeed = 0;
+		int32_t stringCarryOverSize;
+		int32_t i(0);
+		for(; i < edgeCount && it < end; ++i) {
+			source = getInt32(it);
+			target = getInt32(it);
+			weight = getInt32(it);
+			type = getInt32(it);
+			if (gt == GT_MAXSPEED) {
+				maxSpeed = getInt32(it);
+			}
+			stringCarryOverSize = getInt32(it);
+			if (it+stringCarryOverSize <= end) {
+				node(source, target, weight, type, maxSpeed, stringCarryOverSize, it);
+			}
+			it += stringCarryOverSize;
+		}
+		if (i < edgeCount) {
+			std::cout << "Not enough edges\n";
+			return false;
+		}
+	}
+	return true;
 }
 
 int32_t FmiBinaryReader::getInt32(uint8_t*& offset) {
