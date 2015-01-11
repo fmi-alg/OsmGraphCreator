@@ -27,27 +27,52 @@ inline bool isUndirectedEdge(const std::unordered_set<int> & implicitOneWay, int
 	return true;
 }
 
-inline void gatherNodes(osmpbf::OSMFileIn & inFile, std::unordered_set<int64_t> & nodeRefs, StatePtr state) {
+inline void gatherNodes(osmpbf::OSMFileIn & inFile, StatePtr state) {
 	osmpbf::PrimitiveBlockInputAdaptor pbi;
 	uint32_t nodeId = 0;
 	inFile.dataSeek(0);
 	sserialize::ProgressInfo progress;
-	progress.begin(nodeRefs.size(), "Gathering nodes");
-	while (inFile.parseNextBlock(pbi) && nodeRefs.size()) {
-		if (pbi.isNull())
+	progress.begin(state->osmIdToMyNodeId.size(), "Gathering nodes");
+	while (inFile.parseNextBlock(pbi) && nodeId < progress.targetCount) {
+		if (pbi.isNull()) {
 			continue;
+		}
 		progress(nodeId);
 
 		if (pbi.nodesSize()) {
 			for (osmpbf::INodeStream node = pbi.getNodeStream(); !node.isNull(); node.next()) {
 				int64_t osmId = node.id();
-				if (nodeRefs.count(osmId) ) {
-					nodeRefs.erase(osmId);
+				if (state->osmIdToMyNodeId.count(osmId)) {
 					Node n(nodeId, osmId, 0);
 					state->nodes.push_back(n);
 					state->nodeCoordinates.push_back(Coordinates(node.latd(), node.lond()));
 					++nodeId;
 					state->osmIdToMyNodeId[n.osmId] = n.id;
+				}
+			}
+		}
+	}
+	progress.end();
+}
+
+///deletes all available nodes from state->osmIdToMyNodeId
+inline void deleteAvailableNodes(osmpbf::OSMFileIn & inFile, StatePtr state) {
+	osmpbf::PrimitiveBlockInputAdaptor pbi;
+	uint32_t nodeId = 0;
+	inFile.dataSeek(0);
+	sserialize::ProgressInfo progress;
+	progress.begin(state->osmIdToMyNodeId.size(), "Gathering nodes");
+	while (inFile.parseNextBlock(pbi) && nodeId < progress.targetCount) {
+		if (pbi.isNull()) {
+			continue;
+		}
+		progress(nodeId);
+
+		if (pbi.nodesSize()) {
+			for (osmpbf::INodeStream node = pbi.getNodeStream(); !node.isNull(); node.next()) {
+				int64_t osmId = node.id();
+				if (state->osmIdToMyNodeId.count(osmId)) {
+					state->osmIdToMyNodeId.erase(osmId);
 				}
 			}
 		}
@@ -127,19 +152,22 @@ struct WayParser {
 	}
 };
 
+///Inserts all nodes needed by valid ways into state->osmIdToMyNodeId using the id as usage count
 struct RefGatherProcessor {
-	RefGatherProcessor(StatePtr state, std::shared_ptr< std::unordered_set<int64_t> > nodeRefs, uint64_t * edgeCount) :
-	state(state), nodeRefs(nodeRefs), edgeCount(edgeCount) {}
+	RefGatherProcessor(StatePtr state, uint64_t * edgeCount) :
+	state(state), edgeCount(edgeCount) {}
 	StatePtr state;
-	std::shared_ptr< std::unordered_set<int64_t> > nodeRefs;
 	uint64_t * edgeCount;
 	
 	std::unordered_set<std::string> kS;
 	inline const std::unordered_set<std::string> & keysToStore() const { return kS; }
 	
 	inline void operator()(int ows, int hwType, const std::unordered_map<std::string, std::string> & storedKv, const osmpbf::IWay & way) {
+		if (state->invalidWays.count(way.id())) { //check if way is valid
+			return;
+		}
 		for(osmpbf::IWayStream::RefIterator refIt(way.refBegin()), refEnd(way.refEnd()); refIt != refEnd; ++refIt) {
-			nodeRefs->insert(*refIt);
+			state->osmIdToMyNodeId[*refIt] += 1;
 		}
 		uint32_t myEdgeCount = way.refsSize()-1;
 		if (isUndirectedEdge(state->cfg.implicitOneWay, ows, hwType)) {
@@ -149,14 +177,14 @@ struct RefGatherProcessor {
 	}
 };
 
+///This marks ways invalid if a node is in state->osmIdToMyNodeId and in the way
 struct InvalidWayMarkingProcessor {
-	InvalidWayMarkingProcessor(StatePtr state, std::shared_ptr< std::unordered_set<int64_t> > unfetchedNodeRefs, uint64_t * edgeCount) :
-	state(state), unfetchedNodeRefs(unfetchedNodeRefs), edgeCount(edgeCount)
+	InvalidWayMarkingProcessor(StatePtr state, uint64_t * edgeCount) :
+	state(state), edgeCount(edgeCount)
 	{
 	}
 	
 	StatePtr state;
-	std::shared_ptr< std::unordered_set<int64_t> > unfetchedNodeRefs;
 	uint64_t * edgeCount;
 
 	std::unordered_set<std::string> kS;
@@ -165,7 +193,7 @@ struct InvalidWayMarkingProcessor {
 	inline void operator()(int ows, int hwType, const std::unordered_map<std::string, std::string> & storedKv, const osmpbf::IWay & way) {
 		bool invalid = false;
 		for(osmpbf::IWayStream::RefIterator refIt(way.refBegin()), refEnd(way.refEnd()); refIt != refEnd; ++refIt) {
-			if (unfetchedNodeRefs->count(*refIt)) {
+			if (state->osmIdToMyNodeId.count(*refIt)) {
 				invalid = true;
 				break;
 			}

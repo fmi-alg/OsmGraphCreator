@@ -229,36 +229,43 @@ int main(int argc, char ** argv) {
 	};
 
 	{
-		std::shared_ptr< std::unordered_set<int64_t> > nodeRefs(new std::unordered_set<int64_t>());
-
-		//Now get all nodeRefs we need
+		//Now get all nodeRefs we need, store node usage count in state->osmIdToMyNodeId
 		{
 			if (hugheHashMapPopulate >= 0) {
 				std::cout << "Find node id bounds" << std::endl;
 				uint64_t smallestId, largestId = 0;
 				inFile.dataSeek(0);
 				findNodeIdBounds(inFile, smallestId, largestId);
-				if (hugheHashMapPopulate != 0)
+				if (hugheHashMapPopulate != 0) {
 					largestId = std::min<uint64_t>(smallestId+hugheHashMapPopulate, largestId);
+				}
 				state->osmIdToMyNodeId = State::OsmIdToMyNodeIdHashMap(smallestId, largestId, sserialize::MM_SHARED_MEMORY);
 			}
 		
 			inFile.dataSeek(0);
-			RefGatherProcessor refGatherProcessor(state, nodeRefs, &edgeCount);
+			RefGatherProcessor refGatherProcessor(state, &edgeCount);
 			WayParser wayParser("Gathering nodeRefs", inFile, state->cfg.hwTagIds);
 			wayParser.parse(refGatherProcessor);
 		}
-		state->nodes.reserve(nodeRefs->size());
-		gatherNodes(inFile, *nodeRefs, state);
-		//nodeRefs now holds all node refs that could not be fetched!
 		
-
-		if (nodeRefs->size()) { //check if we have to mark some ways invalid
+		deleteAvailableNodes(inFile, state);
+		//state->osmIdToMyNodeId now only contains nodes that could not be retrieved
+		if (state->osmIdToMyNodeId.size()) { //check if we have to mark some ways invalid
 			inFile.dataSeek(0);
-			InvalidWayMarkingProcessor iwmP(state, nodeRefs, &edgeCount);
+			InvalidWayMarkingProcessor iwmP(state, &edgeCount);
 			WayParser wayParser("Marking invalid ways", inFile, state->cfg.hwTagIds);
 			wayParser.parse(iwmP);
 		}
+		
+		//Rebuild nodeId hash, but this time invalid ways are taken into account
+		inFile.dataSeek(0);
+		RefGatherProcessor refGatherProcessor(state, &edgeCount);
+		WayParser wayParser("Regathering nodeRefs", inFile, state->cfg.hwTagIds);
+		wayParser.parse(refGatherProcessor);
+		
+		//Really fetch the nodes
+		state->nodes.reserve(state->osmIdToMyNodeId.size());
+		gatherNodes(inFile, state);
 	}
 	
 	if (graphType == GT_SSERIALIZE_OFFSET_ARRAY || graphType == GT_SSERIALIZE_LARGE_OFFSET_ARRAY) {
