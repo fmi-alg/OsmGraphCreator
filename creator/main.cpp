@@ -42,42 +42,13 @@ bool readConfig(const std::string & fileName, State::Configuration & cfg) {
 	return true;
 }
 
-bool findNodeIdBounds(osmpbf::OSMFileIn & inFile, uint64_t & smallestId, uint64_t & largestId) {
-	osmpbf::PrimitiveBlockInputAdaptor pbi;
-
-	int64_t tempLargestId = std::numeric_limits<int64_t>::min();
-	int64_t tempSmallestId = std::numeric_limits<int64_t>::max();
-	
-	{
-		while (inFile.parseNextBlock(pbi)) {
-			if (pbi.isNull())
-				continue;
-			if (pbi.waysSize()) {
-				for (osmpbf::IWayStream way = pbi.getWayStream(); !way.isNull(); way.next()) {
-					for(osmpbf::IWayStream::RefIterator it(way.refBegin()), end(way.refEnd()); it != end; ++it) {
-						int64_t refId = *it;
-						tempLargestId = std::max<int64_t>(tempLargestId, refId);
-						tempSmallestId = std::min<int64_t>(tempSmallestId, refId);
-					}
-				}
-			}
-		}
-	}
-	
-	if (tempLargestId >= 0 && tempSmallestId >= 0) {
-		largestId = tempLargestId;
-		smallestId = tempSmallestId;
-		return true;
-	}
-	return false;
-}
-
 void help() {
 	std::cout << "USAGE: -g (fmitext|fmibinary|fmimaxspeedtext|fmimaxspeedbinary|sserializeoffsetarray|sserializelargeoffsetarray|plot) -t (none|distance|time|maxspeed) -c <config> -o <outfile> <infile>" << std::endl;
 	std::cout << "<where \n \
 	-g selects the output type. fmi(text|binary) is specified by https://theogit.fmi.uni-stuttgart.de/hartmafk/fmigraph/wikis/types \n \
 	-t select the cost function of edges, maxspeed according to tag if specified, otherwise as defined in the config \n \
-	-c path to to config (see sample configs)" << std::endl;
+	-c path to to config (see sample configs) \n \
+	-hs NUM use a direct hashing scheme with NUM entries for the osmid->nodeid hash. Set to 0 for auto-size." << std::endl;
 }
 
 
@@ -157,10 +128,13 @@ int main(int argc, char ** argv) {
 		}
 		else if (token == "-hs" && i+1 < argc) {
 			std::string v(argv[i+1]);
-			if (v == "auto")
+			if (v == "auto") {
 				hugheHashMapPopulate = 0;
-			else
+			}
+			else {
 				hugheHashMapPopulate = atol(v.c_str());
+			}
+			++i;
 		}
 		else {
 			inputFileName = std::string(argv[i]);
@@ -231,19 +205,25 @@ int main(int argc, char ** argv) {
 		//Now get all nodeRefs we need, store node usage count in state->osmIdToMyNodeId
 		{
 			if (hugheHashMapPopulate >= 0) {
-				std::cout << "Find node id bounds" << std::endl;
-				uint64_t smallestId, largestId = 0;
 				inFile.dataSeek(0);
-				findNodeIdBounds(inFile, smallestId, largestId);
-				if (hugheHashMapPopulate != 0) {
-					largestId = std::min<uint64_t>(smallestId+hugheHashMapPopulate, largestId);
+				MinMaxNodeIdProcessor minMaxNodeIdProcessor;
+				WayParser wayParser("Calculating min/max node id for direct hash map", inFile, state->cfg.hwTagIds);
+				wayParser.parse(minMaxNodeIdProcessor);
+				minMaxNodeIdProcessor.largestId.update(0);
+				minMaxNodeIdProcessor.smallestId.update(minMaxNodeIdProcessor.largestId.value());
+				int64_t largestId = minMaxNodeIdProcessor.largestId.value();
+				int64_t smallestId = minMaxNodeIdProcessor.smallestId.value();
+				std::cout << "Min nodeId=" << smallestId << "\nMax nodeId=" << largestId << "\n";
+				if (hugheHashMapPopulate > 0) {
+					largestId= std::min<uint64_t>(smallestId+hugheHashMapPopulate, largestId);
 				}
-				state->osmIdToMyNodeId = State::OsmIdToMyNodeIdHashMap(smallestId, largestId, sserialize::MM_SHARED_MEMORY);
+				std::cout << "DirectRange=" << smallestId << ":" << largestId << std::endl;
+				state->osmIdToMyNodeId = State::OsmIdToMyNodeIdHashMap(minMaxNodeIdProcessor.smallestId.value(), largestId, sserialize::MM_SHARED_MEMORY);
 			}
 		
 			inFile.dataSeek(0);
 			AllNodesGatherProcessor allNodesGatherProcessor(state);
-			WayParser wayParser("Gathering all nodeRefs", inFile, state->cfg.hwTagIds);
+			WayParser wayParser("Collecting candidate node refs", inFile, state->cfg.hwTagIds);
 			wayParser.parse(allNodesGatherProcessor);
 		}
 		
@@ -263,7 +243,7 @@ int main(int argc, char ** argv) {
 		//Rebuild nodeId hash, but this time invalid ways are taken into account
 		inFile.dataSeek(0);
 		NodeRefGatherProcessor refGatherProcessor(state);
-		WayParser wayParser("Regathering nodeRefs", inFile, state->cfg.hwTagIds);
+		WayParser wayParser("Collecting needed node refs", inFile, state->cfg.hwTagIds);
 		wayParser.parse(refGatherProcessor);
 		
 		//Really fetch the nodes

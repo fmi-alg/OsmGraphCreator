@@ -5,6 +5,7 @@
 #include <osmpbf/inode.h>
 #include <osmpbf/filter.h>
 #include <osmpbf/primitiveblockinputadaptor.h>
+#include <sserialize/utility/utilmath.h>
 #include "types.h"
 #include "conversion.h"
 #include "GraphWriter.h"
@@ -32,7 +33,7 @@ inline void gatherNodes(osmpbf::OSMFileIn & inFile, StatePtr state) {
 	uint32_t nodeId = 0;
 	inFile.dataSeek(0);
 	sserialize::ProgressInfo progress;
-	progress.begin(state->osmIdToMyNodeId.size(), "Gathering nodes");
+	progress.begin(state->osmIdToMyNodeId.size(), "Collecting nodes");
 	while (inFile.parseNextBlock(pbi) && nodeId < progress.targetCount) {
 		if (pbi.isNull()) {
 			continue;
@@ -61,7 +62,7 @@ inline void deleteAvailableNodes(osmpbf::OSMFileIn & inFile, StatePtr state) {
 	uint32_t nodeId = 0;
 	inFile.dataSeek(0);
 	sserialize::ProgressInfo progress;
-	progress.begin(state->osmIdToMyNodeId.size(), "Gathering nodes");
+	progress.begin(state->osmIdToMyNodeId.size(), "Finding unavailable nodes");
 	while (inFile.parseNextBlock(pbi) && nodeId < progress.targetCount) {
 		if (pbi.isNull()) {
 			continue;
@@ -149,6 +150,24 @@ struct WayParser {
 			}
 		}
 		progress.end();
+	}
+};
+
+///Get the min/max node id
+struct MinMaxNodeIdProcessor {
+	MinMaxNodeIdProcessor() {}
+	sserialize::AtomicMax<int64_t> largestId;
+	sserialize::AtomicMin<int64_t> smallestId;
+	
+	std::unordered_set<std::string> kS;
+	inline const std::unordered_set<std::string> & keysToStore() const { return kS; }
+	
+	inline void operator()(int ows, int hwType, const std::unordered_map<std::string, std::string> & storedKv, const osmpbf::IWay & way) {
+		for(osmpbf::IWayStream::RefIterator refIt(way.refBegin()), refEnd(way.refEnd()); refIt != refEnd; ++refIt) {
+			int64_t refId = *refIt;
+			largestId.update(refId);
+			smallestId.update(refId);
+		}
 	}
 };
 
