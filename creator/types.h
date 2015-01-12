@@ -67,6 +67,8 @@ struct State {
 	std::unordered_set<int64_t> invalidWays;
 	std::vector<Coordinates> nodeCoordinates;
 	std::vector<Node> nodes; //this is only temporarily valid and gets deleted after writing out the nodes
+	uint64_t edgeCount;
+	State() : edgeCount(0) {}
 };
 
 typedef std::shared_ptr<State> StatePtr;

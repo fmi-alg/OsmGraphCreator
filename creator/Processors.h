@@ -72,7 +72,7 @@ inline void deleteAvailableNodes(osmpbf::OSMFileIn & inFile, StatePtr state) {
 			for (osmpbf::INodeStream node = pbi.getNodeStream(); !node.isNull(); node.next()) {
 				int64_t osmId = node.id();
 				if (state->osmIdToMyNodeId.count(osmId)) {
-					state->osmIdToMyNodeId.erase(osmId);
+					state->osmIdToMyNodeId.unmark(osmId);
 				}
 			}
 		}
@@ -152,12 +152,28 @@ struct WayParser {
 	}
 };
 
-///Inserts all nodes needed by valid ways into state->osmIdToMyNodeId using the id as usage count
-struct RefGatherProcessor {
-	RefGatherProcessor(StatePtr state, uint64_t * edgeCount) :
-	state(state), edgeCount(edgeCount) {}
+///Marks all nodes needed by valid ways into state->osmIdToMyNodeId
+struct AllNodesGatherProcessor {
+	AllNodesGatherProcessor(StatePtr state) :
+	state(state) {}
 	StatePtr state;
-	uint64_t * edgeCount;
+	
+	std::unordered_set<std::string> kS;
+	inline const std::unordered_set<std::string> & keysToStore() const { return kS; }
+	
+	inline void operator()(int ows, int hwType, const std::unordered_map<std::string, std::string> & storedKv, const osmpbf::IWay & way) {
+		for(osmpbf::IWayStream::RefIterator refIt(way.refBegin()), refEnd(way.refEnd()); refIt != refEnd; ++refIt) {
+			state->osmIdToMyNodeId.mark(*refIt);
+		}
+	}
+};
+
+///Marks all nodes needed by valid ways into state->osmIdToMyNodeId
+///BUT taking invalid ways into account and updating edgeCount
+struct NodeRefGatherProcessor {
+	NodeRefGatherProcessor(StatePtr state) :
+	state(state) {}
+	StatePtr state;
 	
 	std::unordered_set<std::string> kS;
 	inline const std::unordered_set<std::string> & keysToStore() const { return kS; }
@@ -167,44 +183,33 @@ struct RefGatherProcessor {
 			return;
 		}
 		for(osmpbf::IWayStream::RefIterator refIt(way.refBegin()), refEnd(way.refEnd()); refIt != refEnd; ++refIt) {
-			state->osmIdToMyNodeId[*refIt] += 1;
+			state->osmIdToMyNodeId.mark(*refIt);
 		}
 		uint32_t myEdgeCount = way.refsSize()-1;
 		if (isUndirectedEdge(state->cfg.implicitOneWay, ows, hwType)) {
 			myEdgeCount *= 2;
 		}
-		*edgeCount += myEdgeCount;
+		state->edgeCount += myEdgeCount;
 	}
 };
 
 ///This marks ways invalid if a node is in state->osmIdToMyNodeId and in the way
 struct InvalidWayMarkingProcessor {
-	InvalidWayMarkingProcessor(StatePtr state, uint64_t * edgeCount) :
-	state(state), edgeCount(edgeCount)
-	{
-	}
+	InvalidWayMarkingProcessor(StatePtr state) :
+	state(state)
+	{}
 	
 	StatePtr state;
-	uint64_t * edgeCount;
 
 	std::unordered_set<std::string> kS;
 	inline const std::unordered_set<std::string> & keysToStore() const { return kS; }
 	
 	inline void operator()(int ows, int hwType, const std::unordered_map<std::string, std::string> & storedKv, const osmpbf::IWay & way) {
-		bool invalid = false;
 		for(osmpbf::IWayStream::RefIterator refIt(way.refBegin()), refEnd(way.refEnd()); refIt != refEnd; ++refIt) {
 			if (state->osmIdToMyNodeId.count(*refIt)) {
-				invalid = true;
-				break;
+				state->invalidWays.insert(way.id());
+				return;
 			}
-		}
-		if (invalid) {
-			uint32_t myEdgeCount = way.refsSize()-1;
-			if (isUndirectedEdge(state->cfg.implicitOneWay, ows, hwType)) {
-				myEdgeCount *= 2;
-			}
-			*edgeCount -= myEdgeCount;
-			state->invalidWays.insert(way.id());
 		}
 	}
 };

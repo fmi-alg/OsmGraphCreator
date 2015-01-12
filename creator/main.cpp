@@ -199,7 +199,6 @@ int main(int argc, char ** argv) {
 		state->cfg.implicitOneWay.insert(state->cfg.hwTagIds.at("motorway_link"));
 	}
 	
-	uint64_t edgeCount = 0;
 	std::shared_ptr< GraphWriter > graphWriter;
 	switch (graphType) {
 	case GT_FMI_BINARY:
@@ -243,23 +242,27 @@ int main(int argc, char ** argv) {
 			}
 		
 			inFile.dataSeek(0);
-			RefGatherProcessor refGatherProcessor(state, &edgeCount);
-			WayParser wayParser("Gathering nodeRefs", inFile, state->cfg.hwTagIds);
-			wayParser.parse(refGatherProcessor);
+			AllNodesGatherProcessor allNodesGatherProcessor(state);
+			WayParser wayParser("Gathering all nodeRefs", inFile, state->cfg.hwTagIds);
+			wayParser.parse(allNodesGatherProcessor);
 		}
 		
 		deleteAvailableNodes(inFile, state);
 		//state->osmIdToMyNodeId now only contains nodes that could not be retrieved
 		if (state->osmIdToMyNodeId.size()) { //check if we have to mark some ways invalid
 			inFile.dataSeek(0);
-			InvalidWayMarkingProcessor iwmP(state, &edgeCount);
+			InvalidWayMarkingProcessor iwmP(state);
 			WayParser wayParser("Marking invalid ways", inFile, state->cfg.hwTagIds);
 			wayParser.parse(iwmP);
 		}
+		state->osmIdToMyNodeId.clear();
+		
+		assert(state->edgeCount == 0);
+		assert(state->osmIdToMyNodeId.size() == 0);
 		
 		//Rebuild nodeId hash, but this time invalid ways are taken into account
 		inFile.dataSeek(0);
-		RefGatherProcessor refGatherProcessor(state, &edgeCount);
+		NodeRefGatherProcessor refGatherProcessor(state);
 		WayParser wayParser("Regathering nodeRefs", inFile, state->cfg.hwTagIds);
 		wayParser.parse(refGatherProcessor);
 		
@@ -275,13 +278,13 @@ int main(int argc, char ** argv) {
 		wayParser.parse(nodeDegreeProcessor);
 	}
 	
-	std::cout << "Graph has " << state->nodes.size() << " nodes and " << edgeCount << " edges." << std::endl;
+	std::cout << "Graph has " << state->nodes.size() << " nodes and " << state->edgeCount << " edges." << std::endl;
 	
 	{//write the nodes out
 		state->nodeCoordinates.reserve(state->nodes.size());
 		graphWriter->beginGraph();
 		graphWriter->beginHeader();
-		graphWriter->writeHeader(state->nodes.size(), edgeCount);
+		graphWriter->writeHeader(state->nodes.size(), state->edgeCount);
 		graphWriter->endHeader();
 		graphWriter->beginNodes();
 		sserialize::ProgressInfo info;
