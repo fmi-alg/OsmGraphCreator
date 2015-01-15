@@ -5,6 +5,7 @@
 #include <sserialize/utility/ProgressInfo.h>
 #include <sserialize/Static/DynamicFixedLengthVector.h>
 #include <ostream>
+#include <algorithm>
 
 namespace osm {
 namespace graphtools {
@@ -86,8 +87,42 @@ class FmiMaxSpeedBinaryGraphWriter: public FmiBinaryGraphWriter {
 public:
 	FmiMaxSpeedBinaryGraphWriter(std::ostream & out);
 	virtual ~FmiMaxSpeedBinaryGraphWriter();
-	virtual void writeHeader(uint64_t nodeCount, uint64_t edgeCount);	
+	virtual void writeHeader(uint64_t nodeCount, uint64_t edgeCount);
 	virtual void writeEdge(const Edge & edge);
+};
+
+class SortedEdgeWriter: public GraphWriter {
+private:
+	std::shared_ptr<GraphWriter> m_baseGraphWriter;
+	std::vector<Edge> m_edges;
+public:
+	SortedEdgeWriter(std::shared_ptr<GraphWriter> & baseGraphWriter) : m_baseGraphWriter(baseGraphWriter) {}
+	virtual ~SortedEdgeWriter() {}
+	virtual void beginGraph() {m_baseGraphWriter->beginGraph();}
+	virtual void beginHeader() {m_baseGraphWriter->beginHeader();}
+	virtual void endHeader() {m_baseGraphWriter->endHeader();}
+	virtual void beginNodes() {m_baseGraphWriter->beginNodes();}
+	virtual void endNodes() {m_baseGraphWriter->endNodes();}
+	virtual void beginEdges() {}
+	virtual void endEdges() {
+		std::sort(m_edges.begin(), m_edges.end(), [](const Edge & e1, const Edge & e2) {
+			return (e1.source == e2.source ? e1.target < e2.target : e1.source < e2.source);
+		});
+		m_baseGraphWriter->beginEdges();
+		for(const Edge & e : m_edges) {
+			m_baseGraphWriter->writeEdge(e);
+		}
+		m_baseGraphWriter->endEdges();
+		m_edges = std::vector<Edge>();
+	}
+	virtual void endGraph() {m_baseGraphWriter->endGraph();}
+
+	virtual void writeHeader(uint64_t nodeCount, uint64_t edgeCount) {
+		m_edges.reserve(edgeCount);
+		m_baseGraphWriter->writeHeader(nodeCount, edgeCount);
+	}
+	virtual void writeNode(const Node & node, const Coordinates & coordinates) { m_baseGraphWriter->writeNode(node, coordinates); };
+	virtual void writeEdge(const Edge & edge) { m_edges.push_back(edge); }
 };
 
 class RamGraphWriter: public graphtools::creator::GraphWriter {

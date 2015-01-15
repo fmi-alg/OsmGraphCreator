@@ -48,6 +48,7 @@ void help() {
 	-g selects the output type. fmi(text|binary) is specified by https://theogit.fmi.uni-stuttgart.de/hartmafk/fmigraph/wikis/types \n \
 	-t select the cost function of edges, maxspeed according to tag if specified, otherwise as defined in the config \n \
 	-c path to to config (see sample configs) \n \
+	-s sort edges according to source and target \n \
 	-hs NUM use a direct hashing scheme with NUM entries for the osmid->nodeid hash. Set to 0 for auto-size." << std::endl;
 }
 
@@ -65,6 +66,7 @@ int main(int argc, char ** argv) {
 	WeightCalculatorType wcType = WC_DISTANCE;
 	GraphType graphType = GT_NONE;
 	int64_t hugheHashMapPopulate = -1;
+	bool sortedEdges = false;
 	
 	
 	for(int i = 1; i < argc;++i) {
@@ -88,6 +90,9 @@ int main(int argc, char ** argv) {
 				return -1;
 			}
 			++i;
+		}
+		else if (token == "-s") {
+			sortedEdges = true;
 		}
 		else if (token == "-c" && i+1 < argc) {
 			configFileName = std::string(argv[i+1]);
@@ -200,6 +205,9 @@ int main(int argc, char ** argv) {
 		std::cout << "Unsuported graph format" << std::endl;
 		return -1;
 	};
+	if (sortedEdges) {
+		graphWriter.reset(new SortedEdgeWriter(graphWriter));
+	}
 
 	{
 		//Now get all nodeRefs we need, store node usage count in state->osmIdToMyNodeId
