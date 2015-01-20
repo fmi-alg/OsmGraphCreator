@@ -1,9 +1,9 @@
 #include <iostream>
 #include <limits>
 #include <iomanip>
-#include "fmibinaryreader.h"
+#include "fmitextreader.h"
 
-class MyGraphReader: public OsmGraphWriter::FmiBinaryReader {
+class MyGraphReader: public OsmGraphWriter::FmiTextReader {
 private:
 	std::ostream & out() { return std::cout; }
 	GraphType m_gt;

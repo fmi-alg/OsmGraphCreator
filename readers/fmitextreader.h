@@ -1,22 +1,18 @@
-#ifndef OSM_GRAPH_CREATOR_FMI_BINARY_READER_H
-#define OSM_GRAPH_CREATOR_FMI_BINARY_READER_H
+#ifndef OSM_GRAPH_CREATOR_FMI_TEXT_READER_H
+#define OSM_GRAPH_CREATOR_FMI_TEXT_READER_H
 #include <stdint.h>
 #include <string>
 
 namespace OsmGraphWriter {
 
 
-class FmiBinaryReader {
+class FmiTextReader {
 public:
-	typedef enum {GT_STANDARD, GT_MAXSPEED} GraphType;
-protected:
-	int32_t getInt32(char*& offset);
-	int64_t getInt64(char*& offset);
-	double getDouble(char*& offset);
-	void readGraph(char* inBegin, char* end);
+	typedef enum {GT_STANDARD, GT_MAXSPEED, GT_UNDEFINED} GraphType;
+	void readGraph(std::istream & input);
 public:
-	FmiBinaryReader();
-	virtual ~FmiBinaryReader();
+	FmiTextReader();
+	virtual ~FmiTextReader();
 	///throws great error messages and eats your kitten afterwards
 	void read(char* path);
 	virtual void header(GraphType type, int32_t nodeCount, int32_t edgeCount) = 0;
