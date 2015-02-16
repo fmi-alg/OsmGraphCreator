@@ -62,12 +62,12 @@ inline void deleteAvailableNodes(osmpbf::OSMFileIn & inFile, StatePtr state) {
 	uint32_t nodeId = 0;
 	inFile.dataSeek(0);
 	sserialize::ProgressInfo progress;
-	progress.begin(state->osmIdToMyNodeId.size(), "Finding unavailable nodes");
+	progress.begin(inFile.dataSize(), "Finding unavailable nodes");
 	while (inFile.parseNextBlock(pbi) && nodeId < progress.targetCount) {
 		if (pbi.isNull()) {
 			continue;
 		}
-		progress(nodeId);
+		progress(inFile.dataPosition());
 
 		if (pbi.nodesSize()) {
 			for (osmpbf::INodeStream node = pbi.getNodeStream(); !node.isNull(); node.next()) {
