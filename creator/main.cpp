@@ -71,7 +71,12 @@ int main(int argc, char ** argv) {
 	
 	for(int i = 1; i < argc;++i) {
 		std::string token(argv[i]);
-		if (token == "-t" && i+1 < argc) {
+		
+		if (token == "-h" || token == "--help") {
+			help();
+			return 0;
+		}
+		else if (token == "-t" && i+1 < argc) {
 			std::string wcS(argv[i+1]);
 			if  (wcS ==  "none") {
 				wcType = WC_NONE;
