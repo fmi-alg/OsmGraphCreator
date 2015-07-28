@@ -1,3 +1,6 @@
+Checkout:
+git clone --recursive <url>
+
 You need:
 cmake
 google protobuf
