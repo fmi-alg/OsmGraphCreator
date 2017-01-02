@@ -24,15 +24,15 @@ bool readConfig(const std::string & fileName, State::Configuration & cfg) {
 		std::getline(inFile, typeId);
 		std::getline(inFile, weight);
 		if (value.size() == 0) {
-			std::cout << "Empty value in confi" << std::endl;
+			std::cout << "Empty value in config" << std::endl;
 			return false;
 		}
 		if (typeId.size() == 0) {
-			std::cout << "Empty typeId in confi" << std::endl;
+			std::cout << "Empty typeId in config" << std::endl;
 			return false;
 		}
 		if (weight.size() == 0) {
-			std::cout << "Empty weight in confi" << std::endl;
+			std::cout << "Empty weight in config" << std::endl;
 			return false;
 		}
 		int id = atoi(typeId.c_str());
@@ -43,7 +43,7 @@ bool readConfig(const std::string & fileName, State::Configuration & cfg) {
 }
 
 void help() {
-	std::cout << "USAGE: -g (fmitext|fmibinary|fmimaxspeedtext|fmimaxspeedbinary|sserializeoffsetarray|sserializelargeoffsetarray|plot) -t (none|distance|time|maxspeed) -c <config> -o <outfile> <infile>" << std::endl;
+	std::cout << "USAGE: -g (topotext|fmitext|fmibinary|fmimaxspeedtext|fmimaxspeedbinary|sserializeoffsetarray|sserializelargeoffsetarray|plot) -t (none|distance|time|maxspeed) -c <config> -o <outfile> <infile>" << std::endl;
 	std::cout << "<where \n \
 	-g selects the output type. fmi(text|binary) is specified by https://theogit.fmi.uni-stuttgart.de/hartmafk/fmigraph/wikis/types \n \
 	-t select the cost function of edges, maxspeed according to tag if specified, otherwise as defined in the config \n \
@@ -109,7 +109,10 @@ int main(int argc, char ** argv) {
 		}
 		else if (token == "-g" && i+1 < argc) {
 			std::string gtS(argv[i+1]);
-			if  (gtS ==  "fmitext") {
+			if (gtS == "topotext") {
+				graphType = GT_TOPO_TEXT;
+			}
+			else if  (gtS ==  "fmitext") {
 				graphType = GT_FMI_TEXT;
 			}
 			else if (gtS == "fmibinary") {
@@ -185,6 +188,9 @@ int main(int argc, char ** argv) {
 	
 	std::shared_ptr< GraphWriter > graphWriter;
 	switch (graphType) {
+	case GT_TOPO_TEXT:
+		graphWriter.reset(new TopologyTextGraphWriter(outFile));
+		break;
 	case GT_FMI_BINARY:
 		graphWriter.reset(new FmiBinaryGraphWriter(outFile));
 		break;

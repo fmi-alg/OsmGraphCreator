@@ -46,6 +46,19 @@ struct GraphWriter {
 	}
 };
 
+class TopologyTextGraphWriter: public GraphWriter {
+private:
+	std::ostream & m_out;
+protected:
+	inline std::ostream & out() { return m_out; }
+public:
+	TopologyTextGraphWriter(std::ostream & out);
+	virtual ~TopologyTextGraphWriter();
+	virtual void writeHeader(uint64_t nodeCount, uint64_t edgeCount);
+	virtual void writeNode(const Node & node, const Coordinates & coordinates);
+	virtual void writeEdge(const Edge & edge);
+};
+
 class FmiTextGraphWriter: public GraphWriter {
 private:
 	std::ostream & m_out;

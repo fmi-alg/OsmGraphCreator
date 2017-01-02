@@ -48,6 +48,22 @@ namespace osm {
 namespace graphtools {
 namespace creator {
 
+TopologyTextGraphWriter::TopologyTextGraphWriter(std::ostream & out) :  m_out(out) {}
+TopologyTextGraphWriter::~TopologyTextGraphWriter(){}
+
+void TopologyTextGraphWriter::writeHeader(uint64_t nodeCount, uint64_t edgeCount) {
+	out() << nodeCount << "\n";
+	out() << edgeCount << "\n";
+}
+
+void TopologyTextGraphWriter::writeNode(const osm::graphtools::creator::Node & node, const osm::graphtools::creator::Coordinates & coordinates) {
+	out() << coordinates.lat << " " << coordinates.lon << "\n";
+}
+
+void TopologyTextGraphWriter::writeEdge(const Edge & e) {
+	out() << e.source << " " << e.target << "\n";
+}
+
 // # Id : [hexstring]
 // # Timestamp : [int]
 // # Type: standard
@@ -218,7 +234,7 @@ void PlotGraph::writeHeader(uint64_t nodeCount, uint64_t edgeCount) {
 	m_nodes.reserve(nodeCount);
 }
 void PlotGraph::writeNode(const osm::graphtools::creator::Node & node, const osm::graphtools::creator::Coordinates & coordinates) {
-	m_nodes.push_back(coordinates);
+	m_nodes.emplace_back(coordinates);
 }
 void PlotGraph::writeEdge(const graphtools::creator::Edge & edge) {
 	out() <<  m_nodes[edge.source].lon << " " << m_nodes[edge.source].lat << " " << m_nodes[edge.target].lon << " " << m_nodes[edge.target].lat << std::endl;
