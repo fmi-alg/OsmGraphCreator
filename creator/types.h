@@ -62,6 +62,13 @@ struct State {
 		std::unordered_set<int> implicitOneWay;
 		inline double maxSpeedFromType(int type) { return 360.0/typeToWeight.at(type); }
 	} cfg;
+	struct CommandLineOptions {
+		WeightCalculatorType wcType = WC_DISTANCE;
+		GraphType graphType = GT_NONE;
+		int64_t hugheHashMapPopulate = -1;
+		bool sortedEdges = false;
+		bool addReverseEdges = true;
+	} cmd;
 	typedef sserialize::DirectHugeHashMap<uint32_t> OsmIdToMyNodeIdHashMap;
 	OsmIdToMyNodeIdHashMap osmIdToMyNodeId;
 	std::unordered_set<int64_t> invalidWays;

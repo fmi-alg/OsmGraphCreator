@@ -49,7 +49,8 @@ void help() {
 	-t select the cost function of edges, maxspeed according to tag if specified, otherwise as defined in the config \n \
 	-c path to to config (see sample configs) \n \
 	-s sort edges according to source and target \n \
-	-hs NUM use a direct hashing scheme with NUM entries for the osmid->nodeid hash. Set to 0 for auto-size." << std::endl;
+	-hs NUM use a direct hashing scheme with NUM entries for the osmid->nodeid hash. Set to 0 for auto-size.\n \
+	--no-reverse-edge" << std::endl;
 }
 
 
@@ -63,10 +64,6 @@ int main(int argc, char ** argv) {
 	std::string inputFileName;
 	std::string outFileName;
 	StatePtr state(new State());
-	WeightCalculatorType wcType = WC_DISTANCE;
-	GraphType graphType = GT_NONE;
-	int64_t hugheHashMapPopulate = -1;
-	bool sortedEdges = false;
 	
 	
 	for(int i = 1; i < argc;++i) {
@@ -79,16 +76,16 @@ int main(int argc, char ** argv) {
 		else if (token == "-t" && i+1 < argc) {
 			std::string wcS(argv[i+1]);
 			if  (wcS ==  "none") {
-				wcType = WC_NONE;
+				state->cmd.wcType = WC_NONE;
 			}
 			else if (wcS == "distance") {
-				wcType = WC_DISTANCE;
+				state->cmd.wcType = WC_DISTANCE;
 			}
 			else if (wcS == "time") {
-				wcType = WC_TIME;
+				state->cmd.wcType = WC_TIME;
 			}
 			else if (wcS == "maxspeed") {
-				wcType = WC_MAXSPEED;
+				state->cmd.wcType = WC_MAXSPEED;
 			}
 			else {
 				std::cerr << "Invalid weight calculator" << std::endl;
@@ -97,7 +94,7 @@ int main(int argc, char ** argv) {
 			++i;
 		}
 		else if (token == "-s") {
-			sortedEdges = true;
+			state->cmd.sortedEdges = true;
 		}
 		else if (token == "-c" && i+1 < argc) {
 			configFileName = std::string(argv[i+1]);
@@ -110,28 +107,28 @@ int main(int argc, char ** argv) {
 		else if (token == "-g" && i+1 < argc) {
 			std::string gtS(argv[i+1]);
 			if (gtS == "topotext") {
-				graphType = GT_TOPO_TEXT;
+				state->cmd.graphType = GT_TOPO_TEXT;
 			}
 			else if  (gtS ==  "fmitext") {
-				graphType = GT_FMI_TEXT;
+				state->cmd.graphType = GT_FMI_TEXT;
 			}
 			else if (gtS == "fmibinary") {
-				graphType = GT_FMI_BINARY;
+				state->cmd.graphType = GT_FMI_BINARY;
 			}
 			else if (gtS == "fmimaxspeedtext") {
-				graphType = GT_FMI_MAXSPEED_TEXT;
+				state->cmd.graphType = GT_FMI_MAXSPEED_TEXT;
 			}
 			else if (gtS == "fmimaxspeedbinary") {
-				graphType = GT_FMI_MAXSPEED_BINARY;
+				state->cmd.graphType = GT_FMI_MAXSPEED_BINARY;
 			}
 			else if (gtS == "sserializeoffsetarray") {
-				graphType = GT_SSERIALIZE_OFFSET_ARRAY;
+				state->cmd.graphType = GT_SSERIALIZE_OFFSET_ARRAY;
 			}
 			else if (gtS == "sserializelargeoffsetarray") {
-				graphType = GT_SSERIALIZE_LARGE_OFFSET_ARRAY;
+				state->cmd.graphType = GT_SSERIALIZE_LARGE_OFFSET_ARRAY;
 			}
 			else if (gtS == "plot") {
-				graphType = GT_PLOT;
+				state->cmd.graphType = GT_PLOT;
 			}
 			else {
 				std::cerr << "Invalid graph type" << std::endl;
@@ -142,12 +139,15 @@ int main(int argc, char ** argv) {
 		else if (token == "-hs" && i+1 < argc) {
 			std::string v(argv[i+1]);
 			if (v == "auto") {
-				hugheHashMapPopulate = 0;
+				state->cmd.hugheHashMapPopulate = 0;
 			}
 			else {
-				hugheHashMapPopulate = atol(v.c_str());
+				state->cmd.hugheHashMapPopulate = atol(v.c_str());
 			}
 			++i;
+		}
+		else if (token == "--no-reverse-edge") {
+			state->cmd.addReverseEdges = false;
 		}
 		else {
 			inputFileName = std::string(argv[i]);
@@ -162,7 +162,7 @@ int main(int argc, char ** argv) {
 	}
 	
 	std::ofstream outFile;
-	if (graphType != GT_SSERIALIZE_OFFSET_ARRAY && graphType != GT_SSERIALIZE_LARGE_OFFSET_ARRAY) {
+	if (state->cmd.graphType != GT_SSERIALIZE_OFFSET_ARRAY && state->cmd.graphType != GT_SSERIALIZE_LARGE_OFFSET_ARRAY) {
 		outFile.open(outFileName);
 		if (!outFile.is_open()) {
 			std::cout << "Failed to open out file " << outFileName << std::endl;
@@ -187,7 +187,7 @@ int main(int argc, char ** argv) {
 	}
 	
 	std::shared_ptr< GraphWriter > graphWriter;
-	switch (graphType) {
+	switch (state->cmd.graphType) {
 	case GT_TOPO_TEXT:
 		graphWriter.reset(new TopologyTextGraphWriter(outFile));
 		break;
@@ -216,14 +216,14 @@ int main(int argc, char ** argv) {
 		std::cout << "Unsuported graph format" << std::endl;
 		return -1;
 	};
-	if (sortedEdges) {
+	if (state->cmd.sortedEdges) {
 		graphWriter.reset(new SortedEdgeWriter(graphWriter));
 	}
 
 	{
 		//Now get all nodeRefs we need, store node usage count in state->osmIdToMyNodeId
 		{
-			if (hugheHashMapPopulate >= 0) {
+			if (state->cmd.hugheHashMapPopulate >= 0) {
 				inFile.dataSeek(0);
 				MinMaxNodeIdProcessor minMaxNodeIdProcessor;
 				WayParser wayParser("Calculating min/max node id for direct hash map", inFile, state->cfg.hwTagIds);
@@ -233,8 +233,8 @@ int main(int argc, char ** argv) {
 				int64_t largestId = minMaxNodeIdProcessor.largestId.value();
 				int64_t smallestId = minMaxNodeIdProcessor.smallestId.value();
 				std::cout << "Min nodeId=" << smallestId << "\nMax nodeId=" << largestId << "\n";
-				if (hugheHashMapPopulate > 0) {
-					largestId= std::min<uint64_t>(smallestId+hugheHashMapPopulate, largestId);
+				if (state->cmd.hugheHashMapPopulate > 0) {
+					largestId= std::min<uint64_t>(smallestId+state->cmd.hugheHashMapPopulate, largestId);
 				}
 				std::cout << "DirectRange=" << smallestId << ":" << largestId << std::endl;
 				state->osmIdToMyNodeId = State::OsmIdToMyNodeIdHashMap(minMaxNodeIdProcessor.smallestId.value(), largestId, sserialize::MM_SHARED_MEMORY);
@@ -270,7 +270,7 @@ int main(int argc, char ** argv) {
 		gatherNodes(inFile, state);
 	}
 	
-	if (graphType == GT_SSERIALIZE_OFFSET_ARRAY || graphType == GT_SSERIALIZE_LARGE_OFFSET_ARRAY) {
+	if (state->cmd.graphType == GT_SSERIALIZE_OFFSET_ARRAY || state->cmd.graphType == GT_SSERIALIZE_LARGE_OFFSET_ARRAY) {
 		NodeDegreeProcessor nodeDegreeProcessor(state);
 		inFile.dataSeek(0);
 		WayParser wayParser("Adding node degree information", inFile, state->cfg.hwTagIds);
@@ -298,7 +298,7 @@ int main(int argc, char ** argv) {
 
 	{
 		std::shared_ptr< WeightCalculator > weightCalculator;
-		switch (wcType) {
+		switch (state->cmd.wcType) {
 		case WC_NONE:
 			weightCalculator.reset(new NoWeightCalculator());
 			break;

@@ -205,7 +205,7 @@ struct NodeRefGatherProcessor {
 			state->osmIdToMyNodeId.mark(*refIt);
 		}
 		uint32_t myEdgeCount = way.refsSize()-1;
-		if (isUndirectedEdge(state->cfg.implicitOneWay, ows, hwType)) {
+		if (state->cmd.addReverseEdges && isUndirectedEdge(state->cfg.implicitOneWay, ows, hwType)) {
 			myEdgeCount *= 2;
 		}
 		state->edgeCount += myEdgeCount;
@@ -252,7 +252,7 @@ struct NodeDegreeProcessor {
 				Edge e(state->osmIdToMyNodeId.at(*refSrc), state->osmIdToMyNodeId.at(*refTg), 1, hwType, 0);
 				state->nodes.at(e.source).outdegree += 1;
 				state->nodes.at(e.target).indegree += 1;
-				if (undirectEdge) {
+				if (state->cmd.addReverseEdges && undirectEdge) {
 					e.reverse();
 					state->nodes.at(e.source).outdegree += 1;
 					state->nodes.at(e.target).indegree += 1;
@@ -278,7 +278,6 @@ struct FinalWayProcessor {
 	
 	inline void operator()(int ows, int hwType, const std::unordered_map<std::string, std::string> & storedKv, const osmpbf::IWay & way) {
 		if (state->invalidWays.count(way.id()) == 0) {
-			bool undirectEdge = isUndirectedEdge(state->cfg.implicitOneWay, ows, hwType);
 			int maxSpeed = 0;
 			if (!storedKv.count("maxspeed") || !parseMaxSpeed(storedKv.at("maxspeed"), maxSpeed)) {
 				maxSpeed = state->cfg.maxSpeedFromType(hwType);
@@ -290,7 +289,7 @@ struct FinalWayProcessor {
 				Edge e(state->osmIdToMyNodeId.at(*refSrc), state->osmIdToMyNodeId.at(*refTg), 1, hwType, maxSpeed);
 				e.weight = weightCalculator->calc(e);
 				graphWriter->writeEdge(e);
-				if (undirectEdge) {
+				if (state->cmd.addReverseEdges && isUndirectedEdge(state->cfg.implicitOneWay, ows, hwType)) {
 					graphWriter->writeEdge(e.reverse());
 				}
 			}
