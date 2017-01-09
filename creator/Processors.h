@@ -72,7 +72,7 @@ inline void deleteAvailableNodes(osmpbf::OSMFileIn & inFile, StatePtr state) {
 		if (pbi.nodesSize()) {
 			for (osmpbf::INodeStream node = pbi.getNodeStream(); !node.isNull(); node.next()) {
 				int64_t osmId = node.id();
-				if (state->osmIdToMyNodeId.count(osmId)) {
+				if ( (! state->cmd.withBounds || state->cmd.bounds.contains(node.latd(), node.lond())) && state->osmIdToMyNodeId.count(osmId)) {
 					state->osmIdToMyNodeId.unmark(osmId);
 				}
 			}

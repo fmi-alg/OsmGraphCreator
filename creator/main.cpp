@@ -50,6 +50,7 @@ void help() {
 	-c path to to config (see sample configs) \n \
 	-s sort edges according to source and target \n \
 	-hs NUM use a direct hashing scheme with NUM entries for the osmid->nodeid hash. Set to 0 for auto-size.\n \
+	-b \"minlat maxlat minlon maxlon\" \n \
 	--no-reverse-edge" << std::endl;
 }
 
@@ -143,6 +144,18 @@ int main(int argc, char ** argv) {
 			}
 			else {
 				state->cmd.hugheHashMapPopulate = atol(v.c_str());
+			}
+			++i;
+		}
+		else if (token == "-b" && i+1 < argc) {
+			std::string v(argv[i+1]);
+			state->cmd.bounds = sserialize::spatial::GeoRect(v);
+			if (state->cmd.bounds.valid()) {
+				state->cmd.withBounds = true;
+			}
+			else {
+				std::cerr << "Could not read bounds specification" << std::endl;
+				return -1;
 			}
 			++i;
 		}

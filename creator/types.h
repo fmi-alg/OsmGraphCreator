@@ -7,6 +7,7 @@
 #include <unordered_set>
 #include <vector>
 #include <sserialize/templated/DirectHugeHash.h>
+#include <sserialize/spatial/GeoRect.h>
 
 namespace osm {
 namespace graphtools {
@@ -63,6 +64,8 @@ struct State {
 		inline double maxSpeedFromType(int type) { return 360.0/typeToWeight.at(type); }
 	} cfg;
 	struct CommandLineOptions {
+		bool withBounds = false;
+		sserialize::spatial::GeoRect bounds;
 		WeightCalculatorType wcType = WC_DISTANCE;
 		GraphType graphType = GT_NONE;
 		int64_t hugheHashMapPopulate = -1;
