@@ -3,4 +3,5 @@
 	url = https://github.com/inphos42/osmpbf.git
 [submodule "vendor/sserialize"]
 	path = vendor/sserialize
-	url = git://git.funroll-loops.de/sserialize.git
+	url = https://github.com/dbahrdt/sserialize.git
+ 
