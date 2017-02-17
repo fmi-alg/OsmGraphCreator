@@ -1,7 +1,6 @@
 #include "RamGraph.h"
 #include <sserialize/containers/MultiVarBitArray.h>
-#include <sserialize/utility/utilmath.h>
-#include <sserialize/utility/ProgressInfo.h>
+#include <sserialize/stats/ProgressInfo.h>
 #include <sserialize/Static/Array.h>
 
 namespace osm {

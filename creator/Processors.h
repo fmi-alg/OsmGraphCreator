@@ -5,7 +5,6 @@
 #include <osmpbf/inode.h>
 #include <osmpbf/filter.h>
 #include <osmpbf/primitiveblockinputadaptor.h>
-#include <sserialize/utility/utilmath.h>
 #include "types.h"
 #include "conversion.h"
 #include "GraphWriter.h"

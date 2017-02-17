@@ -2,7 +2,7 @@
 #define OSM_GRAPH_TOOLS_GRAPH_WRITER_H
 #include "types.h"
 #include "RamGraph.h"
-#include <sserialize/utility/ProgressInfo.h>
+#include <sserialize/stats/ProgressInfo.h>
 #include <sserialize/Static/DynamicFixedLengthVector.h>
 #include <ostream>
 #include <algorithm>

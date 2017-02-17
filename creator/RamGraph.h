@@ -2,8 +2,8 @@
 #define OSM_GRAPH_TOOLS_RAM_GRAPH_H
 #include <stdint.h>
 #include <vector>
-#include <sserialize/utility/UByteArrayAdapter.h>
-#include <sserialize/utility/SerializationInfo.h>
+#include <sserialize/storage/UByteArrayAdapter.h>
+#include <sserialize/storage/SerializationInfo.h>
 
 namespace osm {
 namespace graphs {

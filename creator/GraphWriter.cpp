@@ -7,7 +7,6 @@
 #include <type_traits>
 #include <functional>
 #include <limits>
-#include <sserialize/utility/utilmath.h>
 
 /* make sure be32toh and be64toh are present */
 #if defined(__linux__)
@@ -41,7 +40,7 @@ static uint64_t my_htobe64(uint64_t x) {
 }
 
 #endif
-#include <sserialize/utility/ProgressInfo.h>
+#include <sserialize/stats/ProgressInfo.h>
 
 
 namespace osm {

@@ -1,6 +1,5 @@
 #include "MaxSpeedParser.h"
 
-#include <sserialize/containers/SetOpTreePrivateSimple.h>
 #include <iostream>
 
 //^([0-9][\.0-9]+?)(?:[ ]?(?:kmh|km/h|mph|kph))?$
