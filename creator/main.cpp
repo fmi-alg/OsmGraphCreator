@@ -43,15 +43,23 @@ bool readConfig(const std::string & fileName, State::Configuration & cfg) {
 }
 
 void help() {
-	std::cout << "USAGE: -g (topotext|fmitext|fmibinary|fmimaxspeedtext|fmimaxspeedbinary|sserializeoffsetarray|sserializelargeoffsetarray|plot) -t (none|distance|time|maxspeed) -c <config> -o <outfile> <infile>" << std::endl;
-	std::cout << "<where \n \
-	-g selects the output type. fmi(text|binary) is specified by https://theogit.fmi.uni-stuttgart.de/hartmafk/fmigraph/wikis/types \n \
-	-t select the cost function of edges, maxspeed according to tag if specified, otherwise as defined in the config \n \
-	-c path to to config (see sample configs) \n \
-	-s sort edges according to source and target \n \
-	-hs NUM use a direct hashing scheme with NUM entries for the osmid->nodeid hash. Set to 0 for auto-size.\n \
-	-b \"minlat maxlat minlon maxlon\" \n \
-	--no-reverse-edge" << std::endl;
+	std::cout << "USAGE: -g (topotext|fmitext|fmibinary|fmimaxspeedtext|fmimaxspeedbinary|sserializeoffsetarray|sserializelargeoffsetarray|plot) -t (none|distance|time|maxspeed) -dm <number> -tm <number> -c <config> -o <outfile> <infile>" << std::endl;
+	std::cout << "where \n"
+	"-g selects the output type\n"
+	"\tfmi(maxspeed)(text|binary) is specified by https://theogit.fmi.uni-stuttgart.de/hartmafk/fmigraph/wikis/types \n"
+	"\ttopotext only has the topology. Format is obvious.\n"
+	"\tplot can be used to plot the graph with gnuplot\n"
+	"-t selects the cost function of edges\n"
+	"\tdistance calculates the distance in [m/<-dm>] \n"
+	"\ttime calculates travel time based on edge type in [s/<-tm>]\n"
+	"\tmaxspeed calculates travel time based on maxspeed tag and edge type in [s/<-tm>]\n"
+	"-c path to to config (see sample configs) \n"
+	"-s sort edges according to source and target \n"
+	"-hs NUM use a direct hashing scheme with NUM entries for the osmid->nodeid hash. Set to auto for auto-size.\n"
+	"-b \"minlat maxlat minlon maxlon\" \n"
+	"-dm specifies the distance multiplier. For 1000 the distance is in mm. Default 1\n"
+	"-tm specifies the time multiplier. For 1000 the time is in ms. Default 100\n"
+	"--no-reverse-edge" << std::endl;
 }
 
 
