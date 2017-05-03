@@ -18,7 +18,7 @@ int GeodesicDistanceWeightCalculator::calc(const osm::graphtools::creator::Edge 
 	const Coordinates & dest = state->nodeCoordinates[edge.target];
 	length = distCalc.calc(src.lat, src.lon, dest.lat, dest.lon);
 	assert(length >= 0.0);
-	return length;
+	return length*state->cmd.distanceMult;
 }
 
 int WeightedGeodesicDistanceWeightCalculator::calc(const osm::graphtools::creator::Edge & edge) {
@@ -27,7 +27,7 @@ int WeightedGeodesicDistanceWeightCalculator::calc(const osm::graphtools::creato
 	const Coordinates & dest = state->nodeCoordinates[edge.target];
 	length = distCalc.calc(src.lat, src.lon, dest.lat, dest.lon);
 	assert(length >= 0.0);
-	return length*state->cfg.typeToWeight.at(edge.type);
+	return state->cmd.timeMult/100*length*state->cfg.typeToWeight.at(edge.type);
 };
 
 int MaxSpeedGeodesicDistanceWeightCalculator::calc(const Edge & edge) {
@@ -36,7 +36,7 @@ int MaxSpeedGeodesicDistanceWeightCalculator::calc(const Edge & edge) {
 	const Coordinates & dest = state->nodeCoordinates[edge.target];
 	length = distCalc.calc(src.lat, src.lon, dest.lat, dest.lon);
 	assert(length >= 0.0);
-	return length*3600/edge.maxspeed;
+	return state->cmd.timeMult/100*length*3600/edge.maxspeed;
 }
 
 

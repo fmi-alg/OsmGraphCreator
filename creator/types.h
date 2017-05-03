@@ -71,6 +71,8 @@ struct State {
 		int64_t hugheHashMapPopulate = -1;
 		bool sortedEdges = false;
 		bool addReverseEdges = true;
+		double distanceMult = 1; ///multiply with distance: 1000 -> distance is in mm
+		double timeMult = 100; ///multiply with time: 1000 -> time is in ms 
 	} cmd;
 	typedef sserialize::DirectHugeHashMap<uint32_t> OsmIdToMyNodeIdHashMap;
 	OsmIdToMyNodeIdHashMap osmIdToMyNodeId;

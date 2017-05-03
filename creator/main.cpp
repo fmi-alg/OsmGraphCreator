@@ -147,6 +147,14 @@ int main(int argc, char ** argv) {
 			}
 			++i;
 		}
+		else if (token == "-dm" && i+1 < argc) {
+			state->cmd.distanceMult = atof(argv[i+1]);
+			++i;
+		}
+		else if (token == "-tm" && i+1 < argc) {
+			state->cmd.timeMult = atof(argv[i+1]);
+			++i;
+		}
 		else if (token == "-b" && i+1 < argc) {
 			std::string v(argv[i+1]);
 			state->cmd.bounds = sserialize::spatial::GeoRect(v);
