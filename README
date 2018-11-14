@@ -5,6 +5,9 @@ You need:
 cmake
 google protobuf
 zlib
+crypto++
+ragel
+cgal
 
 Builing:
 mkdir build
