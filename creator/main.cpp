@@ -21,7 +21,13 @@ bool readConfig(const std::string & fileName, State::Configuration & cfg) {
 		std::string typeId;
 		std::string weight;
 		std::getline(inFile, value);
+		if (inFile.eof()) {
+			break;
+		}
 		std::getline(inFile, typeId);
+		if (inFile.eof()) {
+			break;
+		}
 		std::getline(inFile, weight);
 		if (value.size() == 0) {
 			std::cout << "Empty value in config" << std::endl;
