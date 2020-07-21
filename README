@@ -5,6 +5,8 @@ You need:
 cmake
 google protobuf
 zlib
+libicu-dev
+libcppunit-dev
 crypto++
 ragel
 cgal
