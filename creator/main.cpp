@@ -49,7 +49,7 @@ bool readConfig(const std::string & fileName, State::Configuration & cfg) {
 }
 
 void help() {
-	std::cout << "USAGE: -g (topotext|fmitext|fmibinary|fmimaxspeedtext|fmimaxspeedbinary|sserializeoffsetarray|sserializelargeoffsetarray|plot) -t (none|distance|time|maxspeed) -dm <number> -tm <number> -c <config> -o <outfile> <infile>" << std::endl;
+	std::cout << "USAGE: -g (topotext|fmitext|fmibinary|fmimaxspeedtext|fmimaxspeedbinary|sserializeoffsetarray|sserializelargeoffsetarray|plot) -t (none|distance|time|maxspeed) -dm <number> -tm <number> -c <config> -o <outfile> <infiles>" << std::endl;
 	std::cout << "where \n"
 	"-g selects the output type\n"
 	"\tfmi(maxspeed)(text|binary) is specified by https://theogit.fmi.uni-stuttgart.de/hartmafk/fmigraph/wikis/types \n"
@@ -76,7 +76,7 @@ int main(int argc, char ** argv) {
 	}
 
 	std::string configFileName;
-	std::string inputFileName;
+	std::vector<std::string> inputFileNames;
 	std::string outFileName;
 	StatePtr state(new State());
 	
@@ -185,14 +185,16 @@ int main(int argc, char ** argv) {
 			state->cmd.addReverseEdges = false;
 		}
 		else {
-			inputFileName = std::string(argv[i]);
+			inputFileNames.emplace_back(argv[i]);
 		}
 	}
 
-	osmpbf::OSMFileIn inFile(inputFileName, false);
-
-	if (!inFile.open()) {
-		std::cout << "Failed to open " <<  inputFileName << std::endl;
+	osmpbf::PbiStream inFile;
+	try {
+		inFile = osmpbf::PbiStream(inputFileNames);
+	}
+	catch(std::exception const & e) {
+		std::cerr << e.what() << std::endl;
 		return -1;
 	}
 	
@@ -356,8 +358,6 @@ int main(int argc, char ** argv) {
 		graphWriter->endEdges();
 	}
 	graphWriter->endGraph();
-
-	inFile.close();
 
 	return 0;
 }

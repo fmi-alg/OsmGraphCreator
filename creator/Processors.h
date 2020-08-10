@@ -1,6 +1,6 @@
 #ifndef OSM_GRAPH_TOOLS_PROCESSORS_H
 #define OSM_GRAPH_TOOLS_PROCESSORS_H
-#include <osmpbf/osmfile.h>
+#include <osmpbf/pbistream.h>
 #include <osmpbf/iway.h>
 #include <osmpbf/inode.h>
 #include <osmpbf/filter.h>
@@ -27,7 +27,7 @@ inline bool isUndirectedEdge(const std::unordered_set<int> & implicitOneWay, int
 	return true;
 }
 
-inline void gatherNodes(osmpbf::OSMFileIn & inFile, StatePtr state) {
+inline void gatherNodes(osmpbf::PbiStream & inFile, StatePtr state) {
 	osmpbf::PrimitiveBlockInputAdaptor pbi;
 	uint32_t nodeId = 0;
 	inFile.dataSeek(0);
@@ -56,7 +56,7 @@ inline void gatherNodes(osmpbf::OSMFileIn & inFile, StatePtr state) {
 }
 
 ///deletes all available nodes from state->osmIdToMyNodeId
-inline void deleteAvailableNodes(osmpbf::OSMFileIn & inFile, StatePtr state) {
+inline void deleteAvailableNodes(osmpbf::PbiStream & inFile, StatePtr state) {
 	osmpbf::PrimitiveBlockInputAdaptor pbi;
 	uint32_t nodeId = 0;
 	inFile.dataSeek(0);
@@ -81,10 +81,10 @@ inline void deleteAvailableNodes(osmpbf::OSMFileIn & inFile, StatePtr state) {
 }
 
 struct WayParser {
-	WayParser(const std::string & message, osmpbf::OSMFileIn & inFile, const std::unordered_map<std::string, int> & hwTagIds) :
+	WayParser(const std::string & message, osmpbf::PbiStream & inFile, const std::unordered_map<std::string, int> & hwTagIds) :
 	message(message), inFile(inFile), hwTagIds(hwTagIds) {}
 	std::string message;
-	osmpbf::OSMFileIn & inFile;
+	osmpbf::PbiStream & inFile;
 	std::unordered_map<std::string, int> hwTagIds;
 	
 	template<typename TOPERATOR>
