@@ -296,6 +296,13 @@ CCGraphWriter::endGraph() {
 					return sortByRep(m_edges.at(a).source, m_edges.at(b).source);
 				}
 	);
+	if (m_minCCSize > 0) {
+		std::size_t count = 0;
+		for(auto const & x : cch) {
+			count += std::size_t(x.second.first >= m_minCCSize);
+		}
+		std::cout << "Found " << count << " connected components above your threshold" << std::endl;
+	}
 
 	//now write them out
 	std::size_t nodePos{0};
