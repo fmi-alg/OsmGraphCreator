@@ -254,7 +254,7 @@ CCGraphWriter::endGraph() {
 	for(auto const & e : m_edges) {
 		uf.unite(ufh.at(e.source), ufh.at(e.target));
 	}
-	//Get all unique representatives and the number of nodes they represent
+	//Get all unique representatives
 	std::cout << "Setting node representatives" << std::endl;
 	std::unordered_map<UFHandle, std::pair<uint32_t, uint32_t>> cch; //first entry is node count second the edge count
 	for(std::size_t i(0), s(m_nodes.size()); i < s; ++i) {
