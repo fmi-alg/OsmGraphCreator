@@ -331,7 +331,10 @@ CCGraphWriter::endGraph() {
 		for(std::size_t cclNodeId(0); cclNodeId < nodeEdgeCount.first; ++cclNodeId, ++nodePos) {
 			uint32_t globalNodeId = nodesSortedByRep.at(nodePos);
 			assert(uf.find( ufh.at(globalNodeId) ) == ccrep);
-			writer->writeNode(m_nodes.at(globalNodeId).first, m_nodes.at(globalNodeId).second);
+			//we need to remap the id of the node first
+			Node node = m_nodes.at(globalNodeId).first;
+			node.id = cclNodeId;
+			writer->writeNode(node, m_nodes.at(globalNodeId).second);
 			nodeIdRemap.at(globalNodeId) = cclNodeId;
 		}
 		writer->endNodes();
