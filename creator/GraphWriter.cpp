@@ -242,11 +242,8 @@ CCGraphWriter::endGraph() {
 	std::cout << "Finding connected components" << std::endl;
 	using UnionFind = sserialize::UnionFind<uint32_t>;
 	using UFHandle = UnionFind::handle_type;
-	//compute all connected components and write them to disk
-	constexpr uint32_t nccid = std::numeric_limits<uint32_t>::max();
 	UnionFind uf;
 	std::vector<UFHandle> ufh(m_nodes.size());
-	std::vector<uint32_t> ccids(m_nodes.size(), nccid);
 	//add all nodes as single sets
 	std::cout << "Creating single sets for union find" << std::endl;
 	for(std::size_t i(0), s(m_nodes.size()); i < s; ++i) {
