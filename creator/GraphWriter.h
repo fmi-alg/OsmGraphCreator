@@ -168,7 +168,7 @@ public:
 	///A factory that creates a new graph writer for the given connected component id
 	using GraphWriterFactory = std::function<std::shared_ptr<GraphWriter>(CCId)>;
 public:
-	CCGraphWriter(GraphWriterFactory factory);
+	CCGraphWriter(GraphWriterFactory factory, uint32_t minCCSize = 0);
 	~CCGraphWriter() override;
 	void endGraph() override;
 	void writeHeader(uint64_t nodeCount, uint64_t edgeCount) override;
@@ -178,6 +178,7 @@ private:
 	std::vector< std::pair<Node, Coordinates> > m_nodes;
 	std::vector<Edge> m_edges;
 	GraphWriterFactory m_f;
+	uint32_t m_minCCSize;
 };
 
 class StaticGraphWriter: public graphtools::creator::GraphWriter {

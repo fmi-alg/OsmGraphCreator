@@ -62,6 +62,7 @@ void help() {
 	"-c path to to config (see sample configs) \n"
 	"-s sort edges according to source and target \n"
 	"-cc split graph into connected components \n"
+	"-ccs NUM minimum connected component size (automatically sets -cc)\n"
 	"-hs NUM use a direct hashing scheme with NUM entries for the osmid->nodeid hash. Set to auto for auto-size.\n"
 	"-b \"minlat maxlat minlon maxlon\" \n"
 	"-dm specifies the distance multiplier. For 1000 the distance is in mm. Default 1\n"
@@ -114,6 +115,11 @@ int main(int argc, char ** argv) {
 		}
 		else if (token == "-cc") {
 			state->cmd.connectedComponents = true;
+		}
+		else if (token == "-ccs" && i+1 < argc) {
+			state->cmd.connectedComponents = true;
+			state->cmd.minCCSize = std::atoi(argv[i+1]);
+			++i;
 		}
 		else if (token == "-c" && i+1 < argc) {
 			configFileName = std::string(argv[i+1]);
@@ -268,7 +274,8 @@ int main(int argc, char ** argv) {
 			new CCGraphWriter(
 				[&](uint32_t ccId){
 					return graphWriterFactory(outFileName + std::to_string(ccId) + ".cc");
-				}
+				},
+				state->cmd.minCCSize
 			)
 		);
 	}

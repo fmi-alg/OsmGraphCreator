@@ -229,8 +229,9 @@ void RamGraphWriter::endGraph() {
 }
 
 
-CCGraphWriter::CCGraphWriter(GraphWriterFactory factory) :
-m_f(factory)
+CCGraphWriter::CCGraphWriter(GraphWriterFactory factory, uint32_t minCCSize) :
+m_f(factory),
+m_minCCSize(minCCSize)
 {}
 
 CCGraphWriter::~CCGraphWriter()
@@ -304,11 +305,19 @@ CCGraphWriter::endGraph() {
 	std::size_t edgePos{0};
 	std::vector<uint32_t> nodeIdRemap(m_nodes.size()); //remaps nodeIds to cc local ids
 	sserialize::ProgressInfo pinfo;
+	std::size_t ccId = 0;
 	pinfo.begin(cch.size(), "Writing connected components");
-	for(std::size_t ccId(0); ccId < cch.size(); ++ccId) {
-		auto writer = m_f(ccId);
+	for(std::size_t i(0), s(cch.size()); i < s; ++i) {
 		UFHandle ccrep = uf.find( ufh.at(nodesSortedByRep.at(nodePos)) );
 		auto nodeEdgeCount = cch.at(ccrep);
+		
+		if (nodeEdgeCount.first < m_minCCSize) {
+			nodePos += nodeEdgeCount.first;
+			edgePos += nodeEdgeCount.second;
+			continue;
+		}
+		
+		auto writer = m_f(ccId);
 		writer->beginGraph();
 		writer->beginHeader();
 		writer->writeHeader(nodeEdgeCount.first, nodeEdgeCount.second);
@@ -333,7 +342,8 @@ CCGraphWriter::endGraph() {
 		}
 		writer->endEdges();
 		writer->endGraph();
-		pinfo(ccId, "ccid " + std::to_string(ccId) + ": #nodes=" + std::to_string(nodeEdgeCount.first) + " #edges=" + std::to_string(nodeEdgeCount.second));
+		++ccId;
+		pinfo(i, "ccid " + std::to_string(ccId) + ": #nodes=" + std::to_string(nodeEdgeCount.first) + " #edges=" + std::to_string(nodeEdgeCount.second));
 	}
 	pinfo.end();
 }

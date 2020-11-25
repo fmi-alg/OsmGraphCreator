@@ -71,6 +71,7 @@ struct State {
 		int64_t hugheHashMapPopulate = -1;
 		bool sortedEdges = false;
 		bool connectedComponents = false;
+		uint32_t minCCSize = 0;
 		bool addReverseEdges = true;
 		double distanceMult = 1; ///multiply with distance: 1000 -> distance is in mm
 		double timeMult = 100; ///multiply with time: 1000 -> time is in ms 
