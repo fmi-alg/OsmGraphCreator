@@ -61,6 +61,7 @@ void help() {
 	"\tmaxspeed calculates travel time based on maxspeed tag and edge type in [s/<-tm>]\n"
 	"-c path to to config (see sample configs) \n"
 	"-s sort edges according to source and target \n"
+	"-cc split graph into connected components \n"
 	"-hs NUM use a direct hashing scheme with NUM entries for the osmid->nodeid hash. Set to auto for auto-size.\n"
 	"-b \"minlat maxlat minlon maxlon\" \n"
 	"-dm specifies the distance multiplier. For 1000 the distance is in mm. Default 1\n"
@@ -110,6 +111,9 @@ int main(int argc, char ** argv) {
 		}
 		else if (token == "-s") {
 			state->cmd.sortedEdges = true;
+		}
+		else if (token == "-cc") {
+			state->cmd.connectedComponents = true;
 		}
 		else if (token == "-c" && i+1 < argc) {
 			configFileName = std::string(argv[i+1]);
@@ -198,16 +202,6 @@ int main(int argc, char ** argv) {
 		return -1;
 	}
 	
-	std::ofstream outFile;
-	if (state->cmd.graphType != GT_SSERIALIZE_OFFSET_ARRAY && state->cmd.graphType != GT_SSERIALIZE_LARGE_OFFSET_ARRAY) {
-		outFile.open(outFileName);
-		if (!outFile.is_open()) {
-			std::cout << "Failed to open out file " << outFileName << std::endl;
-			return -1;
-		}
-		outFile << std::fixed << std::setprecision(std::numeric_limits<double>::digits10 + 2);
-	}
-	
 	if (!readConfig(configFileName, state->cfg)) {
 		std::cout << "Failed to read config" << std::endl;
 		return -1;
@@ -223,38 +217,69 @@ int main(int argc, char ** argv) {
 		state->cfg.implicitOneWay.insert(state->cfg.hwTagIds.at("motorway_link"));
 	}
 	
-	std::shared_ptr< GraphWriter > graphWriter;
-	switch (state->cmd.graphType) {
-	case GT_TOPO_TEXT:
-		graphWriter.reset(new TopologyTextGraphWriter(outFile));
-		break;
-	case GT_FMI_BINARY:
-		graphWriter.reset(new FmiBinaryGraphWriter(outFile));
-		break;
-	case GT_FMI_MAXSPEED_BINARY:
-		graphWriter.reset(new FmiMaxSpeedBinaryGraphWriter(outFile));
-		break;
-	case GT_FMI_MAXSPEED_TEXT:
-		graphWriter.reset(new FmiMaxSpeedTextGraphWriter(outFile));
-		break;
-	case GT_SSERIALIZE_OFFSET_ARRAY:
-		graphWriter.reset( new RamGraphWriter( sserialize::UByteArrayAdapter::createFile(0, outFileName) ) );
-		break;
-	case GT_SSERIALIZE_LARGE_OFFSET_ARRAY:
-		graphWriter.reset( new StaticGraphWriter( sserialize::UByteArrayAdapter::createFile(0, outFileName) ) );
-		break;
-	case GT_PLOT:
-		graphWriter.reset( new PlotGraph(outFile) );
-		break;
-	case GT_FMI_TEXT:
-		graphWriter.reset(new FmiTextGraphWriter(outFile));
-		break;
-	default:
-		std::cout << "Unsuported graph format" << std::endl;
-		return -1;
+	auto graphWriterFactory = [&](std::string const & outFileName) {
+		std::shared_ptr< GraphWriter > graphWriter;
+		std::shared_ptr<std::ofstream> outFile;
+		if (state->cmd.graphType != GT_SSERIALIZE_OFFSET_ARRAY && state->cmd.graphType != GT_SSERIALIZE_LARGE_OFFSET_ARRAY) {
+			outFile = std::make_shared<std::ofstream>(outFileName);
+			if (!outFile->is_open()) {
+				throw std::runtime_error("Failed to open out file " + outFileName);
+			}
+			*outFile << std::fixed << std::setprecision(std::numeric_limits<double>::digits10 + 2);
+		}
+		switch (state->cmd.graphType) {
+		case GT_TOPO_TEXT:
+			graphWriter.reset(new TopologyTextGraphWriter(outFile));
+			break;
+		case GT_FMI_BINARY:
+			graphWriter.reset(new FmiBinaryGraphWriter(outFile));
+			break;
+		case GT_FMI_MAXSPEED_BINARY:
+			graphWriter.reset(new FmiMaxSpeedBinaryGraphWriter(outFile));
+			break;
+		case GT_FMI_MAXSPEED_TEXT:
+			graphWriter.reset(new FmiMaxSpeedTextGraphWriter(outFile));
+			break;
+		case GT_SSERIALIZE_OFFSET_ARRAY:
+			graphWriter.reset( new RamGraphWriter( sserialize::UByteArrayAdapter::createFile(0, outFileName) ) );
+			break;
+		case GT_SSERIALIZE_LARGE_OFFSET_ARRAY:
+			graphWriter.reset( new StaticGraphWriter( sserialize::UByteArrayAdapter::createFile(0, outFileName) ) );
+			break;
+		case GT_PLOT:
+			graphWriter.reset( new PlotGraph(outFile) );
+			break;
+		case GT_FMI_TEXT:
+			graphWriter.reset(new FmiTextGraphWriter(outFile));
+			break;
+		case GT_NONE:
+			graphWriter.reset(new DropGraphWriter());
+		};
+		if (state->cmd.sortedEdges) {
+			graphWriter.reset(new SortedEdgeWriter(graphWriter));
+		}
+		return graphWriter;
 	};
-	if (state->cmd.sortedEdges) {
-		graphWriter.reset(new SortedEdgeWriter(graphWriter));
+	
+	
+	std::shared_ptr< GraphWriter > graphWriter;
+	if (state->cmd.connectedComponents) {
+		graphWriter.reset(
+			new CCGraphWriter(
+				[&](uint32_t ccId){
+					return graphWriterFactory(outFileName + std::to_string(ccId) + ".cc");
+				}
+			)
+		);
+	}
+	else {
+		try {
+			graphWriter = graphWriterFactory(outFileName);
+		}
+		catch (std::exception const & e) {
+			std::cerr << "Error occured: " << e.what() << std::endl;
+			return -1;
+		}
 	}
 
 	{

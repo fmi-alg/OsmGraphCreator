@@ -41,13 +41,14 @@ static uint64_t my_htobe64(uint64_t x) {
 
 #endif
 #include <sserialize/stats/ProgressInfo.h>
+#include <sserialize/containers/UnionFind.h>
 
 
 namespace osm {
 namespace graphtools {
 namespace creator {
 
-TopologyTextGraphWriter::TopologyTextGraphWriter(std::ostream & out) :  m_out(out) {}
+TopologyTextGraphWriter::TopologyTextGraphWriter(std::shared_ptr<std::ostream> out) :  m_out(out) {}
 TopologyTextGraphWriter::~TopologyTextGraphWriter(){}
 
 void TopologyTextGraphWriter::writeHeader(uint64_t nodeCount, uint64_t edgeCount) {
@@ -69,7 +70,7 @@ void TopologyTextGraphWriter::writeEdge(const Edge & e) {
 // # Revision: 1
 
 
-FmiTextGraphWriter::FmiTextGraphWriter(std::ostream & out) :  m_out(out) {}
+FmiTextGraphWriter::FmiTextGraphWriter(std::shared_ptr<std::ostream> out) :  m_out(out) {}
 FmiTextGraphWriter::~FmiTextGraphWriter(){}
 
 void FmiTextGraphWriter::writeHeader(uint64_t nodeCount, uint64_t edgeCount) {
@@ -98,7 +99,7 @@ void FmiTextGraphWriter::writeEdge(const Edge & e) {
 	out() << "\n";
 }
 
-FmiMaxSpeedTextGraphWriter::FmiMaxSpeedTextGraphWriter(std::ostream & out) : FmiTextGraphWriter(out) {}
+FmiMaxSpeedTextGraphWriter::FmiMaxSpeedTextGraphWriter(std::shared_ptr<std::ostream> out) : FmiTextGraphWriter(out) {}
 FmiMaxSpeedTextGraphWriter::~FmiMaxSpeedTextGraphWriter() {}
 
 void FmiMaxSpeedTextGraphWriter::writeHeader(uint64_t nodeCount, uint64_t edgeCount) {
@@ -118,7 +119,7 @@ void FmiMaxSpeedTextGraphWriter::writeEdge(const Edge & e) {
 	out() << "\n";
 }
 
-FmiBinaryGraphWriter::FmiBinaryGraphWriter(std::ostream & out) :  m_out(out) {}
+FmiBinaryGraphWriter::FmiBinaryGraphWriter(std::shared_ptr<std::ostream> out) :  m_out(out) {}
 
 
 FmiBinaryGraphWriter::~FmiBinaryGraphWriter() {}
@@ -172,7 +173,7 @@ void FmiBinaryGraphWriter::writeEdge(const Edge & e) {
 }
 
 
-FmiMaxSpeedBinaryGraphWriter::FmiMaxSpeedBinaryGraphWriter(std::ostream & out) : FmiBinaryGraphWriter(out) {}
+FmiMaxSpeedBinaryGraphWriter::FmiMaxSpeedBinaryGraphWriter(std::shared_ptr<std::ostream> out) : FmiBinaryGraphWriter(out) {}
 FmiMaxSpeedBinaryGraphWriter::~FmiMaxSpeedBinaryGraphWriter() {}
 
 void FmiMaxSpeedBinaryGraphWriter::writeHeader(uint64_t nodeCount, uint64_t edgeCount) {
@@ -227,7 +228,133 @@ void RamGraphWriter::endGraph() {
 	}
 }
 
-PlotGraph::PlotGraph(std::ostream & out) : m_out(out) {}
+
+CCGraphWriter::CCGraphWriter(GraphWriterFactory factory) :
+m_f(factory)
+{}
+
+CCGraphWriter::~CCGraphWriter()
+{}
+
+void
+CCGraphWriter::endGraph() {
+	std::cout << "Finding connected components" << std::endl;
+	using UnionFind = sserialize::UnionFind<uint32_t>;
+	using UFHandle = UnionFind::handle_type;
+	//compute all connected components and write them to disk
+	constexpr uint32_t nccid = std::numeric_limits<uint32_t>::max();
+	UnionFind uf;
+	std::vector<UFHandle> ufh(m_nodes.size());
+	std::vector<uint32_t> ccids(m_nodes.size(), nccid);
+	//add all nodes as single sets
+	std::cout << "Creating single sets for union find" << std::endl;
+	for(std::size_t i(0), s(m_nodes.size()); i < s; ++i) {
+		ufh.at(i) = uf.make_set(i);
+	}
+	std::cout << "Uniting all nodes using edges" << std::endl;
+	//now unite all nodes that have an edge between each other
+	for(auto const & e : m_edges) {
+		uf.unite(ufh.at(e.source), ufh.at(e.target));
+	}
+	//Get all unique representatives and the number of nodes they represent
+	std::cout << "Setting node representatives" << std::endl;
+	std::unordered_map<UFHandle, std::pair<uint32_t, uint32_t>> cch; //first entry is node count second the edge count
+	for(std::size_t i(0), s(m_nodes.size()); i < s; ++i) {
+		cch[uf.find(ufh.at(i))] = std::pair<uint32_t, uint32_t>(0,0);
+	}
+	std::cout << "Found " << cch.size() << " connected components" << std::endl;
+	//Now we have a Problem: For planet there will be thousands of connected components
+	//However we cannot open thousands of files
+	//We can either create a mapping vector which we sort according to our representative
+	//Or we traverse all nodes/edges per connected component
+	//Quick calc: About 10^9 Nodes and 2*10^9 edges sort takes -> log(10^9) ~ log(2^30) ~30 longer than a single pass
+	//Thus sorting should be way faster
+	//sort all nodes according to their representative
+	auto sortByRep = [&](auto && a, auto && b) -> bool {
+		auto repa = uf.find(ufh.at(a));
+		auto repb = uf.find(ufh.at(b));
+		return repa == repb ? a < b : repa < repb;
+	};
+	
+	std::cout << "Sorting nodes according to their connected component" << std::endl;
+	std::vector<uint32_t> nodesSortedByRep(m_nodes.size());
+	for(std::size_t i(0); i < m_nodes.size(); ++i) {
+		auto nodeRep = uf.find(ufh.at(i));
+		cch.at(nodeRep).first += 1;
+		nodesSortedByRep.at(i) = i;
+	}
+	std::sort(nodesSortedByRep.begin(), nodesSortedByRep.end(), sortByRep);
+	
+	//do the same for the edges
+	//By definition the rep of source and target are the same
+	std::cout << "Sorting edges according to their connected component" << std::endl;
+	std::vector<uint32_t> edgesSortedByRep(m_edges.size());
+	for(std::size_t i(0), s(m_edges.size()); i < s; ++i) {
+		cch.at(uf.find(ufh.at(m_edges.at(i).source))).second += 1;
+		edgesSortedByRep.at(i) = i;
+	}
+	std::sort(edgesSortedByRep.begin(), edgesSortedByRep.end(),
+				[&](auto && a, auto && b) -> bool {
+					return sortByRep(m_edges.at(a).source, m_edges.at(b).source);
+				}
+	);
+
+	//now write them out
+	std::size_t nodePos{0};
+	std::size_t edgePos{0};
+	std::vector<uint32_t> nodeIdRemap(m_nodes.size()); //remaps nodeIds to cc local ids
+	sserialize::ProgressInfo pinfo;
+	pinfo.begin(cch.size(), "Writing connected components");
+	for(std::size_t ccId(0); ccId < cch.size(); ++ccId) {
+		auto writer = m_f(ccId);
+		UFHandle ccrep = uf.find( ufh.at(nodesSortedByRep.at(nodePos)) );
+		auto nodeEdgeCount = cch.at(ccrep);
+		writer->beginGraph();
+		writer->beginHeader();
+		writer->writeHeader(nodeEdgeCount.first, nodeEdgeCount.second);
+		writer->endHeader();
+		//now write all nodes and build mapping table on the fly
+		writer->beginNodes();
+		for(std::size_t cclNodeId(0); cclNodeId < nodeEdgeCount.first; ++cclNodeId, ++nodePos) {
+			uint32_t globalNodeId = nodesSortedByRep.at(nodePos);
+			assert(uf.find( ufh.at(globalNodeId) ) == ccrep);
+			writer->writeNode(m_nodes.at(globalNodeId).first, m_nodes.at(globalNodeId).second);
+			nodeIdRemap.at(globalNodeId) = cclNodeId;
+		}
+		writer->endNodes();
+		//And write all Edges but remap source/target to the new ids
+		writer->beginEdges();
+		for(std::size_t cclEdgeId(0); cclEdgeId < nodeEdgeCount.second; ++cclEdgeId, ++edgePos) {
+			assert(uf.find( ufh.at( m_edges.at(edgesSortedByRep.at(edgePos)).source) ) == ccrep);
+			Edge e = m_edges.at(edgesSortedByRep.at(edgePos));
+			e.source = nodeIdRemap.at(e.source);
+			e.target = nodeIdRemap.at(e.target);
+			writer->writeEdge(e);
+		}
+		writer->endEdges();
+		writer->endGraph();
+		pinfo(ccId, "ccid " + std::to_string(ccId) + ": #nodes=" + std::to_string(nodeEdgeCount.first) + " #edges=" + std::to_string(nodeEdgeCount.second));
+	}
+	pinfo.end();
+}
+
+void
+CCGraphWriter::writeHeader(uint64_t nodeCount, uint64_t edgeCount) {
+	m_nodes.reserve(nodeCount);
+	m_edges.resize(edgeCount);
+}
+
+void
+CCGraphWriter::writeNode(const graphtools::creator::Node & node, const Coordinates & coordinates) {
+	m_nodes.emplace_back(node, coordinates);
+}
+
+void
+CCGraphWriter::writeEdge(const graphtools::creator::Edge & edge) {
+	m_edges.emplace_back(edge);
+}
+
+PlotGraph::PlotGraph(std::shared_ptr<std::ostream> out) : m_out(out) {}
 PlotGraph::~PlotGraph() {}
 void PlotGraph::writeHeader(uint64_t nodeCount, uint64_t edgeCount) {
 	m_nodes.reserve(nodeCount);

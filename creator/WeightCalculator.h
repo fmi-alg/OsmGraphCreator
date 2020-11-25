@@ -9,36 +9,41 @@ namespace graphtools {
 namespace creator {
 
 struct WeightCalculator {
+	virtual ~WeightCalculator() {}
 	virtual int calc(const Edge & edge) = 0;
 };
 
 struct NoWeightCalculator: public WeightCalculator {
-	virtual int calc(const Edge & edges);
+	~NoWeightCalculator() override {}
+	int calc(const Edge & edges) override;
 };
 
 struct GeodesicDistanceWeightCalculator: public WeightCalculator {
 	GeodesicDistanceWeightCalculator(StatePtr state) : state(state)  {}
+	~GeodesicDistanceWeightCalculator() override {}
 	StatePtr state;
 	sserialize::spatial::detail::GeodesicDistanceCalculator distCalc;
 	
-	virtual int calc(const Edge & edge);
+	int calc(const Edge & edge) override;
 };
 
 struct WeightedGeodesicDistanceWeightCalculator: public WeightCalculator {
 	WeightedGeodesicDistanceWeightCalculator(StatePtr state) : state(state)  {}
+	~WeightedGeodesicDistanceWeightCalculator() override {}
 	StatePtr state;
 	sserialize::spatial::detail::GeodesicDistanceCalculator distCalc;
 	std::shared_ptr< std::unordered_map<int, double> > typeToWeight;
 	
-	virtual int calc(const Edge & edge);
+	int calc(const Edge & edge) override;
 };
 
 struct MaxSpeedGeodesicDistanceWeightCalculator: public WeightCalculator {
 	MaxSpeedGeodesicDistanceWeightCalculator(StatePtr state) : state(state) {}
+	~MaxSpeedGeodesicDistanceWeightCalculator() override {}
 	StatePtr state;
 	sserialize::spatial::detail::GeodesicDistanceCalculator distCalc;
 	///Calulate travel time in seconds
-	virtual int calc(const Edge & edge);
+	int calc(const Edge & edge) override;
 };
 
 }}}//end namespace

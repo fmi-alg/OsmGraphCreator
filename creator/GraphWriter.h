@@ -12,6 +12,8 @@ namespace graphtools {
 namespace creator {
 
 struct GraphWriter {
+	virtual ~GraphWriter() {}
+	
 	virtual void beginGraph() {}
 	virtual void beginHeader() {}
 	virtual void endHeader() {}
@@ -46,13 +48,20 @@ struct GraphWriter {
 	}
 };
 
+struct DropGraphWriter: public GraphWriter {
+	~DropGraphWriter() override {}
+	void writeHeader(uint64_t nodeCount, uint64_t edgeCount) override {}
+	void writeNode(const Node & node, const Coordinates & coordinates) override {}
+	void writeEdge(const Edge & edge) override {}
+};
+
 class TopologyTextGraphWriter: public GraphWriter {
 private:
-	std::ostream & m_out;
+	std::shared_ptr<std::ostream> m_out;
 protected:
-	inline std::ostream & out() { return m_out; }
+	inline std::ostream & out() { return *m_out; }
 public:
-	TopologyTextGraphWriter(std::ostream & out);
+	TopologyTextGraphWriter(std::shared_ptr<std::ostream> out);
 	virtual ~TopologyTextGraphWriter();
 	virtual void writeHeader(uint64_t nodeCount, uint64_t edgeCount);
 	virtual void writeNode(const Node & node, const Coordinates & coordinates);
@@ -61,11 +70,11 @@ public:
 
 class FmiTextGraphWriter: public GraphWriter {
 private:
-	std::ostream & m_out;
+	std::shared_ptr<std::ostream> m_out;
 protected:
-	inline std::ostream & out() { return m_out; }
+	inline std::ostream & out() { return *m_out; }
 public:
-	FmiTextGraphWriter(std::ostream & out);
+	FmiTextGraphWriter(std::shared_ptr<std::ostream> out);
 	virtual ~FmiTextGraphWriter();
 	virtual void writeHeader(uint64_t nodeCount, uint64_t edgeCount);
 	virtual void writeNode(const Node & node, const Coordinates & coordinates);
@@ -74,7 +83,7 @@ public:
 
 class FmiMaxSpeedTextGraphWriter: public FmiTextGraphWriter {
 public:
-	FmiMaxSpeedTextGraphWriter(std::ostream & out);
+	FmiMaxSpeedTextGraphWriter(std::shared_ptr<std::ostream> out);
 	virtual ~FmiMaxSpeedTextGraphWriter();
 	virtual void writeHeader(uint64_t nodeCount, uint64_t edgeCount);
 	virtual void writeEdge(const Edge & edge);
@@ -82,11 +91,11 @@ public:
 
 class FmiBinaryGraphWriter: public GraphWriter {
 private:
-	std::ostream & m_out;
+	std::shared_ptr<std::ostream> m_out;
 protected:
-	inline std::ostream & out() { return m_out; }
+	inline std::ostream & out() { return *m_out; }
 public:
-	FmiBinaryGraphWriter(std::ostream & out);
+	FmiBinaryGraphWriter(std::shared_ptr<std::ostream> out);
 	virtual ~FmiBinaryGraphWriter();
 	void putInt(int32_t v);
 	void putLong(int64_t v);
@@ -98,7 +107,7 @@ public:
 
 class FmiMaxSpeedBinaryGraphWriter: public FmiBinaryGraphWriter {
 public:
-	FmiMaxSpeedBinaryGraphWriter(std::ostream & out);
+	FmiMaxSpeedBinaryGraphWriter(std::shared_ptr<std::ostream> out);
 	virtual ~FmiMaxSpeedBinaryGraphWriter();
 	virtual void writeHeader(uint64_t nodeCount, uint64_t edgeCount);
 	virtual void writeEdge(const Edge & edge);
@@ -138,7 +147,7 @@ public:
 	virtual void writeEdge(const Edge & edge) { m_edges.push_back(edge); }
 };
 
-class RamGraphWriter: public graphtools::creator::GraphWriter {
+class RamGraphWriter: public GraphWriter {
 	sserialize::UByteArrayAdapter m_data;
 	osm::graphs::ram::RamGraph m_graph;
 	osm::graphs::ram::EdgeContainerSizeType m_edgeBegin;
@@ -146,10 +155,29 @@ public:
 	RamGraphWriter(const sserialize::UByteArrayAdapter & data);
 	virtual ~RamGraphWriter();
 	virtual void endGraph();
-	osm::graphs::ram::RamGraph & graph();
 	virtual void writeHeader(uint64_t nodeCount, uint64_t edgeCount);
 	virtual void writeNode(const graphtools::creator::Node & node, const Coordinates & coordinates);
 	virtual void writeEdge(const graphtools::creator::Edge & edge);
+	osm::graphs::ram::RamGraph & graph();
+};
+
+///Writes each connected component into an extra file
+class CCGraphWriter: public GraphWriter {
+public:
+	using CCId = uint32_t;
+	///A factory that creates a new graph writer for the given connected component id
+	using GraphWriterFactory = std::function<std::shared_ptr<GraphWriter>(CCId)>;
+public:
+	CCGraphWriter(GraphWriterFactory factory);
+	~CCGraphWriter() override;
+	void endGraph() override;
+	void writeHeader(uint64_t nodeCount, uint64_t edgeCount) override;
+	void writeNode(const graphtools::creator::Node & node, const Coordinates & coordinates) override;
+	void writeEdge(const graphtools::creator::Edge & edge) override;
+private:
+	std::vector< std::pair<Node, Coordinates> > m_nodes;
+	std::vector<Edge> m_edges;
+	GraphWriterFactory m_f;
 };
 
 class StaticGraphWriter: public graphtools::creator::GraphWriter {
@@ -169,12 +197,12 @@ public:
 
 class PlotGraph: public graphtools::creator::GraphWriter {
 private:
-	std::ostream & m_out;
+	std::shared_ptr<std::ostream> m_out;
 	std::vector<Coordinates> m_nodes;
 protected:
-	inline std::ostream & out() { return m_out; }
+	inline std::ostream & out() { return *m_out; }
 public:
-	PlotGraph(std::ostream & out);
+	PlotGraph(std::shared_ptr<std::ostream> out);
 	virtual ~PlotGraph();
 	virtual void writeHeader(uint64_t nodeCount, uint64_t edgeCount);
 	virtual void writeNode(const graphtools::creator::Node & node, const Coordinates & coordinates);
