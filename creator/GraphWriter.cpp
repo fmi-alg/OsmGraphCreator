@@ -293,7 +293,20 @@ CCGraphWriter::endGraph() {
 	}
 	std::sort(edgesSortedByRep.begin(), edgesSortedByRep.end(),
 				[&](auto && a, auto && b) -> bool {
-					return sortByRep(m_edges.at(a).source, m_edges.at(b).source);
+					Edge const & ea = m_edges.at(a);
+					Edge const & eb = m_edges.at(b);
+					auto rep_srca = uf.find(ufh.at(ea.source));
+					auto rep_srcb = uf.find(ufh.at(eb.source));
+					if (rep_srca == rep_srcb) {
+						//nodes are within the same cc,
+						//we then sort them by their source and the by target
+						//as the SortedEdgeWriter would do
+						//This works since nodes within a cc are sorted by their id/position (which should be the same)
+						return (ea.source == eb.source ? ea.target < eb.target : ea.source < eb.source);
+					}
+					else {
+						return rep_srca < rep_srcb;
+					}
 				}
 	);
 	if (m_minCCSize > 0) {

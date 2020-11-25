@@ -261,7 +261,8 @@ int main(int argc, char ** argv) {
 		case GT_NONE:
 			graphWriter.reset(new DropGraphWriter());
 		};
-		if (state->cmd.sortedEdges) {
+		//connected components graph writer already sorts edges based on their source node
+		if (state->cmd.sortedEdges && !state->cmd.connectedComponents) {
 			graphWriter.reset(new SortedEdgeWriter(graphWriter));
 		}
 		return graphWriter;
