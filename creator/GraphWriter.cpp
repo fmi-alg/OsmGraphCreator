@@ -310,7 +310,7 @@ CCGraphWriter::endGraph() {
 	std::vector<uint32_t> nodeIdRemap(m_nodes.size()); //remaps nodeIds to cc local ids
 	sserialize::ProgressInfo pinfo;
 	std::size_t ccId = 0;
-	pinfo.begin(cch.size(), "Writing connected components");
+	pinfo.begin(m_nodes.size()+m_edges.size(), "Writing connected components");
 	for(std::size_t i(0), s(cch.size()); i < s; ++i) {
 		UFHandle ccrep = uf.find( ufh.at(nodesSortedByRep.at(nodePos)) );
 		auto nodeEdgeCount = cch.at(ccrep);
@@ -350,7 +350,7 @@ CCGraphWriter::endGraph() {
 		writer->endEdges();
 		writer->endGraph();
 		++ccId;
-		pinfo(i, "ccid " + std::to_string(ccId) + ": #nodes=" + std::to_string(nodeEdgeCount.first) + " #edges=" + std::to_string(nodeEdgeCount.second));
+		pinfo(nodePos+edgePos, "ccid " + std::to_string(ccId) + ": #nodes=" + std::to_string(nodeEdgeCount.first) + " #edges=" + std::to_string(nodeEdgeCount.second));
 	}
 	pinfo.end();
 }
