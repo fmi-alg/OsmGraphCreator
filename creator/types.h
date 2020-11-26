@@ -29,13 +29,13 @@ struct Node {
 	Node() {}
 	Node(uint32_t id, int64_t osmId, uint16_t elev) :
 	id(id), osmId(osmId), elev(elev), indegree(0), outdegree(0), stringCarryOverSize(0), stringCarryOverData(0) {}
-	uint32_t id;
-	int64_t osmId;
-	uint16_t elev;
-	uint16_t indegree;
-	uint16_t outdegree;
-	uint16_t stringCarryOverSize;
-	char * stringCarryOverData; //not zero-terminated
+	uint32_t id{std::numeric_limits<uint32_t>::max()};
+	int64_t osmId{std::numeric_limits<int64_t>::min()};
+	uint16_t elev{0};
+	uint16_t indegree{0};
+	uint16_t outdegree{0};
+	uint16_t stringCarryOverSize{0};
+	char * stringCarryOverData{nullptr}; //not zero-terminated
 };
 
 //[source][target][weight][type][sizecarryover][carryover] //kante
@@ -48,11 +48,11 @@ struct Edge {
 		std::swap(source, target);
 		return *this;
 	}
-	uint32_t source;
-	uint32_t target;
-	int32_t weight;
-	int32_t type;
-	int32_t maxspeed; //in km/h
+	uint32_t source{std::numeric_limits<uint32_t>::max()};
+	uint32_t target{std::numeric_limits<uint32_t>::max()};
+	int32_t weight{0};
+	int32_t type{std::numeric_limits<int32_t>::max()};
+	int32_t maxspeed{0}; //in km/h
 	std::string carryover;
 };
 
