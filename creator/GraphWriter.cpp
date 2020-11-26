@@ -248,6 +248,8 @@ void FmiMaxSpeedBinaryGraphWriter::writeEdge(const Edge & e) {
 #endif
 }
 
+#ifdef CONFIG_SUPPORT_SSERIALIZE_OFFSET_ARRAY_TARGET
+
 RamGraphWriter::RamGraphWriter(const sserialize::UByteArrayAdapter & data) : m_data(data), m_edgeBegin(0) {}
 
 RamGraphWriter::~RamGraphWriter() {}
@@ -280,6 +282,43 @@ void RamGraphWriter::endGraph() {
 		m_data.shrinkStorage( m_data.size() - m_data.tellPutPtr() );
 	}
 }
+
+StaticGraphWriter::StaticGraphWriter(const sserialize::UByteArrayAdapter & data) : m_data(data) {}
+StaticGraphWriter::~StaticGraphWriter() {}
+
+void StaticGraphWriter::writeHeader(uint64_t nodeCount, uint64_t edgeCount) {
+	if (nodeCount > std::numeric_limits<uint32_t>::max()) {
+		throw std::runtime_error("Too many nodes to compute connected components");
+	}
+	if (edgeCount > std::numeric_limits<uint32_t>::max()) {
+		throw std::runtime_error("Too many edges to compute connected components");
+	}
+	sserialize::UByteArrayAdapter::OffsetType nodeSpaceUsage = sserialize::Static::DynamicFixedLengthVector<osm::graphs::ram::Node>::spaceUsage(nodeCount);
+	sserialize::UByteArrayAdapter::OffsetType edgeSpaceUsage = sserialize::Static::DynamicFixedLengthVector<osm::graphs::ram::Edge>::spaceUsage(edgeCount);
+	m_data.resize(nodeSpaceUsage + edgeSpaceUsage);
+	m_nodes = sserialize::Static::DynamicFixedLengthVector<osm::graphs::ram::Node>(m_data);
+	m_edges = sserialize::Static::DynamicFixedLengthVector<osm::graphs::ram::Edge>(m_data+nodeSpaceUsage);
+	m_edges.resize(edgeCount);
+	m_edgeBegin = 0;
+	m_edgeOffsets.reserve(nodeCount);
+}
+void StaticGraphWriter::writeNode(const osm::graphtools::creator::Node & node, const osm::graphtools::creator::Coordinates & coordinates) {
+	m_nodes.push_back(osm::graphs::ram::Node(m_edgeBegin, node.outdegree, coordinates.lat, coordinates.lon) );
+	m_edgeOffsets.push_back(m_edgeBegin);
+	m_edgeBegin += node.outdegree;
+}
+
+void StaticGraphWriter::writeEdge(const graphtools::creator::Edge & edge) {
+	uint32_t & ef = m_edgeOffsets[edge.source];
+	osm::graphs::ram::Edge oed;
+	oed.dest = edge.target;
+	oed.weight = edge.weight;
+	oed.type = edge.type;
+	m_edges.set(ef, oed);
+	++ef;
+}
+
+#endif
 
 
 CCGraphWriter::CCGraphWriter(GraphWriterFactory factory, uint32_t minCCSize) :
@@ -472,41 +511,6 @@ void PlotGraph::writeNode(const osm::graphtools::creator::Node & node, const osm
 }
 void PlotGraph::writeEdge(const graphtools::creator::Edge & edge) {
 	out() <<  m_nodes[edge.source].lon << " " << m_nodes[edge.source].lat << " " << m_nodes[edge.target].lon << " " << m_nodes[edge.target].lat << std::endl;
-}
-
-StaticGraphWriter::StaticGraphWriter(const sserialize::UByteArrayAdapter & data) : m_data(data) {}
-StaticGraphWriter::~StaticGraphWriter() {}
-
-void StaticGraphWriter::writeHeader(uint64_t nodeCount, uint64_t edgeCount) {
-	if (nodeCount > std::numeric_limits<uint32_t>::max()) {
-		throw std::runtime_error("Too many nodes to compute connected components");
-	}
-	if (edgeCount > std::numeric_limits<uint32_t>::max()) {
-		throw std::runtime_error("Too many edges to compute connected components");
-	}
-	sserialize::UByteArrayAdapter::OffsetType nodeSpaceUsage = sserialize::Static::DynamicFixedLengthVector<osm::graphs::ram::Node>::spaceUsage(nodeCount);
-	sserialize::UByteArrayAdapter::OffsetType edgeSpaceUsage = sserialize::Static::DynamicFixedLengthVector<osm::graphs::ram::Edge>::spaceUsage(edgeCount);
-	m_data.resize(nodeSpaceUsage + edgeSpaceUsage);
-	m_nodes = sserialize::Static::DynamicFixedLengthVector<osm::graphs::ram::Node>(m_data);
-	m_edges = sserialize::Static::DynamicFixedLengthVector<osm::graphs::ram::Edge>(m_data+nodeSpaceUsage);
-	m_edges.resize(edgeCount);
-	m_edgeBegin = 0;
-	m_edgeOffsets.reserve(nodeCount);
-}
-void StaticGraphWriter::writeNode(const osm::graphtools::creator::Node & node, const osm::graphtools::creator::Coordinates & coordinates) {
-	m_nodes.push_back(osm::graphs::ram::Node(m_edgeBegin, node.outdegree, coordinates.lat, coordinates.lon) );
-	m_edgeOffsets.push_back(m_edgeBegin);
-	m_edgeBegin += node.outdegree;
-}
-
-void StaticGraphWriter::writeEdge(const graphtools::creator::Edge & edge) {
-	uint32_t & ef = m_edgeOffsets[edge.source];
-	osm::graphs::ram::Edge oed;
-	oed.dest = edge.target;
-	oed.weight = edge.weight;
-	oed.type = edge.type;
-	m_edges.set(ef, oed);
-	++ef;
 }
 
 }}}//end namespace

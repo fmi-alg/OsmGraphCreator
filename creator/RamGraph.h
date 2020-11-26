@@ -25,8 +25,6 @@ struct Edge {
 	}
 };
 
-
-
 struct Node {
 	Node() : edgesBegin(0), edgeCount(0) {}
 	Node(EdgeContainerSizeType edgesBegin, uint16_t edgeCount, double lat, double lon) : edgesBegin(edgesBegin), edgeCount(edgeCount), coords(lat, lon) {}

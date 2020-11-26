@@ -49,9 +49,10 @@ bool readConfig(const std::string & fileName, State::Configuration & cfg) {
 }
 
 void help() {
-	std::cout << "USAGE: -g (topotext|fmitext|fmibinary|fmimaxspeedtext|fmimaxspeedbinary|sserializeoffsetarray|sserializelargeoffsetarray|plot|drop) -t (none|distance|time|maxspeed) -dm <number> -tm <number> -c <config> -o <outfile> <infiles>" << std::endl;
+	std::cout << "USAGE: -g <opts> -t <opts> -dm <number> -tm <number> -c <config> -o <outfile> <infiles>" << std::endl;
 	std::cout << "where \n"
 	"-g selects the output type\n"
+	"\t options are (topotext|fmitext|fmibinary|fmimaxspeedtext|fmimaxspeedbinary|sserializeoffsetarray|sserializelargeoffsetarray|plot|drop)\n"
 	"\tfmi(maxspeed)(text|binary) is specified by https://theogit.fmi.uni-stuttgart.de/hartmafk/fmigraph/wikis/types \n"
 	"\ttopotext only has the topology. Format is obvious.\n"
 	"\tplot can be used to plot the graph with gnuplot\n"
@@ -249,12 +250,18 @@ int main(int argc, char ** argv) {
 		case GT_FMI_MAXSPEED_TEXT:
 			graphWriter.reset(new FmiMaxSpeedTextGraphWriter(outFile));
 			break;
+		#ifdef CONFIG_SUPPORT_SSERIALIZE_OFFSET_ARRAY_TARGET
 		case GT_SSERIALIZE_OFFSET_ARRAY:
 			graphWriter.reset( new RamGraphWriter( sserialize::UByteArrayAdapter::createFile(0, outFileName) ) );
 			break;
 		case GT_SSERIALIZE_LARGE_OFFSET_ARRAY:
 			graphWriter.reset( new StaticGraphWriter( sserialize::UByteArrayAdapter::createFile(0, outFileName) ) );
 			break;
+		#else
+		case GT_SSERIALIZE_OFFSET_ARRAY:
+		case GT_SSERIALIZE_LARGE_OFFSET_ARRAY:
+			throw std::runtime_error("Support for sserializeoffsetarray is disabled in build configuration");
+		#endif
 		case GT_PLOT:
 			graphWriter.reset( new PlotGraph(outFile) );
 			break;

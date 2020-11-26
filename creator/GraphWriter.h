@@ -155,6 +155,8 @@ public:
 	virtual void writeEdge(const Edge & edge) { m_edges.push_back(edge); }
 };
 
+#ifdef CONFIG_SUPPORT_SSERIALIZE_OFFSET_ARRAY_TARGET
+
 class RamGraphWriter: public GraphWriter {
 	sserialize::UByteArrayAdapter m_data;
 	osm::graphs::ram::RamGraph m_graph;
@@ -168,6 +170,23 @@ public:
 	virtual void writeEdge(const graphtools::creator::Edge & edge);
 	osm::graphs::ram::RamGraph & graph();
 };
+
+class StaticGraphWriter: public graphtools::creator::GraphWriter {
+private:
+	sserialize::UByteArrayAdapter m_data;
+	sserialize::Static::DynamicFixedLengthVector<osm::graphs::ram::Node> m_nodes;
+	sserialize::Static::DynamicFixedLengthVector<osm::graphs::ram::Edge> m_edges;
+	uint32_t m_edgeBegin{0};
+	std::vector<uint32_t> m_edgeOffsets; 
+public:
+	StaticGraphWriter(const sserialize::UByteArrayAdapter & data);
+	virtual ~StaticGraphWriter();
+	virtual void writeHeader(uint64_t nodeCount, uint64_t edgeCount);
+	virtual void writeNode(const graphtools::creator::Node & node, const Coordinates & coordinates);
+	virtual void writeEdge(const graphtools::creator::Edge & edge);
+};
+
+#endif
 
 ///Writes each connected component into an extra file
 class CCGraphWriter: public GraphWriter {
@@ -187,21 +206,6 @@ private:
 	std::vector<Edge> m_edges;
 	GraphWriterFactory m_f;
 	uint32_t m_minCCSize;
-};
-
-class StaticGraphWriter: public graphtools::creator::GraphWriter {
-private:
-	sserialize::UByteArrayAdapter m_data;
-	sserialize::Static::DynamicFixedLengthVector<osm::graphs::ram::Node> m_nodes;
-	sserialize::Static::DynamicFixedLengthVector<osm::graphs::ram::Edge> m_edges;
-	uint32_t m_edgeBegin{0};
-	std::vector<uint32_t> m_edgeOffsets; 
-public:
-	StaticGraphWriter(const sserialize::UByteArrayAdapter & data);
-	virtual ~StaticGraphWriter();
-	virtual void writeHeader(uint64_t nodeCount, uint64_t edgeCount);
-	virtual void writeNode(const graphtools::creator::Node & node, const Coordinates & coordinates);
-	virtual void writeEdge(const graphtools::creator::Edge & edge);
 };
 
 class PlotGraph: public graphtools::creator::GraphWriter {

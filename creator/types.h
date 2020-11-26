@@ -33,8 +33,10 @@ struct Node {
 	uint32_t id{std::numeric_limits<uint32_t>::max()};
 	int64_t osmId{std::numeric_limits<int64_t>::min()};
 	uint16_t elev{0};
+#ifdef CONFIG_SUPPORT_SSERIALIZE_OFFSET_ARRAY_TARGET
 	uint16_t indegree{0};
 	uint16_t outdegree{0};
+#endif
 #ifdef CONFIG_SUPPORT_STRING_CARRY_OVER
 	uint16_t stringCarryOverSize{0};
 	char * stringCarryOverData{nullptr}; //not zero-terminated

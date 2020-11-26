@@ -253,12 +253,16 @@ struct NodeDegreeProcessor {
 			osmpbf::IWayStream::RefIterator refEnd(way.refEnd());
 			for(; refTg != refEnd; ++refTg, ++refSrc) {
 				Edge e(state->osmIdToMyNodeId.at(*refSrc), state->osmIdToMyNodeId.at(*refTg), 1, hwType, 0);
+				#ifdef CONFIG_SUPPORT_SSERIALIZE_OFFSET_ARRAY_TARGET
 				state->nodes.at(e.source).outdegree += 1;
 				state->nodes.at(e.target).indegree += 1;
+				#endif
 				if (state->cmd.addReverseEdges && undirectEdge) {
 					e.reverse();
+					#ifdef CONFIG_SUPPORT_SSERIALIZE_OFFSET_ARRAY_TARGET
 					state->nodes.at(e.source).outdegree += 1;
 					state->nodes.at(e.target).indegree += 1;
+					#endif
 				}
 			}
 		}
