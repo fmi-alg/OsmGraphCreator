@@ -431,7 +431,7 @@ CCGraphWriter::writeHeader(uint64_t nodeCount, uint64_t edgeCount) {
 		throw std::runtime_error("Too many edges to compute connected components");
 	}
 	m_nodes.reserve(nodeCount);
-	m_edges.resize(edgeCount);
+	m_edges.reserve(edgeCount);
 }
 
 void
