@@ -280,7 +280,7 @@ CCGraphWriter::endGraph() {
 	if (m_edges.size() > std::numeric_limits<uint32_t>::max()) {
 		throw std::runtime_error("Too many edges to compute connected components and the header count is wrong");
 	}
-	std::cout << "Finding connected components" << std::endl;
+	std::cout << "Finding connected components for " << m_nodes.size() << " nodes and " << m_edges.size() << " edges" << std::endl;
 	using UnionFind = sserialize::UnionFind<uint32_t>;
 	using UFHandle = UnionFind::handle_type;
 	UnionFind uf;
