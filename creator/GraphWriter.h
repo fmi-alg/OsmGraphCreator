@@ -48,11 +48,19 @@ struct GraphWriter {
 	}
 };
 
-struct DropGraphWriter: public GraphWriter {
+class DropGraphWriter: public GraphWriter {
+public:
 	~DropGraphWriter() override {}
-	void writeHeader(uint64_t nodeCount, uint64_t edgeCount) override {}
-	void writeNode(const Node & node, const Coordinates & coordinates) override {}
-	void writeEdge(const Edge & edge) override {}
+	void writeHeader(uint64_t nodeCount, uint64_t edgeCount) override;
+	void writeNode(const Node & node, const Coordinates & coordinates) override;
+	void writeEdge(const Edge & edge) override;
+	
+	void endGraph() override;
+private:
+	uint64_t m_nodeCount{0};
+	uint64_t m_edgeCount{0};
+	uint64_t m_writtenNodes{0};
+	uint64_t m_writtenEdges{0};
 };
 
 class TopologyTextGraphWriter: public GraphWriter {

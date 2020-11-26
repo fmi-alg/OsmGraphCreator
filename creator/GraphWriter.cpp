@@ -47,6 +47,41 @@ static uint64_t my_htobe64(uint64_t x) {
 namespace osm {
 namespace graphtools {
 namespace creator {
+	
+void
+DropGraphWriter::writeHeader(uint64_t nodeCount, uint64_t edgeCount) {
+	m_nodeCount = nodeCount;
+	m_edgeCount = edgeCount;
+}
+
+void
+DropGraphWriter::writeNode(const Node & node, const Coordinates &) {
+	if (node.id != m_writtenNodes) {
+		std::cout << "Node id (" << node.id << ") does not match its position (" << m_writtenNodes << ")" << std::endl; 
+	}
+	m_writtenNodes += 1;
+}
+
+void
+DropGraphWriter::writeEdge(const Edge & edge) {
+	if (edge.source >= m_nodeCount) {
+		std::cout << "Edge source points to invalid node" << std::endl;
+	}
+	if (edge.target >= m_nodeCount) {
+		std::cout << "Edge target points to invalid node" << std::endl;
+	}
+	m_writtenEdges += 1;
+}
+
+void
+DropGraphWriter::endGraph() {
+	if (m_nodeCount != m_writtenNodes) {
+		std::cerr << "Number of nodes written (" << m_writtenNodes << ") does not match header info (" << m_nodeCount << ")" << std::endl;
+	}
+	if (m_edgeCount != m_writtenEdges) {
+		std::cerr << "Number of nodes written (" << m_edgeCount << ") does not match header info (" << m_writtenEdges << ")" << std::endl;
+	}
+}
 
 TopologyTextGraphWriter::TopologyTextGraphWriter(std::shared_ptr<std::ostream> out) :  m_out(out) {}
 TopologyTextGraphWriter::~TopologyTextGraphWriter(){}

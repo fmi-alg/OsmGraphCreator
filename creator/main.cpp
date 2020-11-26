@@ -49,7 +49,7 @@ bool readConfig(const std::string & fileName, State::Configuration & cfg) {
 }
 
 void help() {
-	std::cout << "USAGE: -g (topotext|fmitext|fmibinary|fmimaxspeedtext|fmimaxspeedbinary|sserializeoffsetarray|sserializelargeoffsetarray|plot) -t (none|distance|time|maxspeed) -dm <number> -tm <number> -c <config> -o <outfile> <infiles>" << std::endl;
+	std::cout << "USAGE: -g (topotext|fmitext|fmibinary|fmimaxspeedtext|fmimaxspeedbinary|sserializeoffsetarray|sserializelargeoffsetarray|plot|drop) -t (none|distance|time|maxspeed) -dm <number> -tm <number> -c <config> -o <outfile> <infiles>" << std::endl;
 	std::cout << "where \n"
 	"-g selects the output type\n"
 	"\tfmi(maxspeed)(text|binary) is specified by https://theogit.fmi.uni-stuttgart.de/hartmafk/fmigraph/wikis/types \n"
@@ -154,6 +154,9 @@ int main(int argc, char ** argv) {
 			}
 			else if (gtS == "plot") {
 				state->cmd.graphType = GT_PLOT;
+			}
+			else if (gtS == "drop" || gtS == "none") {
+				state->cmd.graphType = GT_NONE;
 			}
 			else {
 				std::cerr << "Invalid graph type" << std::endl;
