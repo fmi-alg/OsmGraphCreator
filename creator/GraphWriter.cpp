@@ -370,6 +370,12 @@ CCGraphWriter::endGraph() {
 
 void
 CCGraphWriter::writeHeader(uint64_t nodeCount, uint64_t edgeCount) {
+	if (nodeCount > std::numeric_limits<uint32_t>::max()) {
+		throw std::runtime_error("Too many nodes to compute connected components");
+	}
+	if (edgeCount > std::numeric_limits<uint32_t>::max()) {
+		throw std::runtime_error("Too many edges to compute connected components");
+	}
 	m_nodes.reserve(nodeCount);
 	m_edges.resize(edgeCount);
 }
@@ -400,6 +406,12 @@ StaticGraphWriter::StaticGraphWriter(const sserialize::UByteArrayAdapter & data)
 StaticGraphWriter::~StaticGraphWriter() {}
 
 void StaticGraphWriter::writeHeader(uint64_t nodeCount, uint64_t edgeCount) {
+	if (nodeCount > std::numeric_limits<uint32_t>::max()) {
+		throw std::runtime_error("Too many nodes to compute connected components");
+	}
+	if (edgeCount > std::numeric_limits<uint32_t>::max()) {
+		throw std::runtime_error("Too many edges to compute connected components");
+	}
 	sserialize::UByteArrayAdapter::OffsetType nodeSpaceUsage = sserialize::Static::DynamicFixedLengthVector<osm::graphs::ram::Node>::spaceUsage(nodeCount);
 	sserialize::UByteArrayAdapter::OffsetType edgeSpaceUsage = sserialize::Static::DynamicFixedLengthVector<osm::graphs::ram::Edge>::spaceUsage(edgeCount);
 	m_data.resize(nodeSpaceUsage + edgeSpaceUsage);

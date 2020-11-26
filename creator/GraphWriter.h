@@ -186,7 +186,7 @@ private:
 	sserialize::UByteArrayAdapter m_data;
 	sserialize::Static::DynamicFixedLengthVector<osm::graphs::ram::Node> m_nodes;
 	sserialize::Static::DynamicFixedLengthVector<osm::graphs::ram::Edge> m_edges;
-	uint32_t m_edgeBegin;
+	uint32_t m_edgeBegin{0};
 	std::vector<uint32_t> m_edgeOffsets; 
 public:
 	StaticGraphWriter(const sserialize::UByteArrayAdapter & data);

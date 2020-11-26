@@ -47,6 +47,9 @@ inline void gatherNodes(osmpbf::PbiStream & inFile, StatePtr state) {
 					state->nodes.push_back(n);
 					state->nodeCoordinates.push_back(Coordinates(node.latd(), node.lond()));
 					++nodeId;
+					if (nodeId == 0) { //check for overflow
+						throw std::runtime_error("Too many nodes");
+					}
 					state->osmIdToMyNodeId[n.osmId] = n.id;
 				}
 			}
@@ -203,7 +206,8 @@ struct NodeRefGatherProcessor {
 		for(osmpbf::IWayStream::RefIterator refIt(way.refBegin()), refEnd(way.refEnd()); refIt != refEnd; ++refIt) {
 			state->osmIdToMyNodeId.mark(*refIt);
 		}
-		uint32_t myEdgeCount = way.refsSize()-1;
+		assert(way.refsSize() > 0);
+		uint64_t myEdgeCount = way.refsSize()-1;
 		if (state->cmd.addReverseEdges && isUndirectedEdge(state->cfg.implicitOneWay, ows, hwType)) {
 			myEdgeCount *= 2;
 		}
