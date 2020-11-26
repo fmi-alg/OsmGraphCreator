@@ -28,14 +28,17 @@ struct Coordinates {
 struct Node {
 	Node() {}
 	Node(uint32_t id, int64_t osmId, uint16_t elev) :
-	id(id), osmId(osmId), elev(elev), indegree(0), outdegree(0), stringCarryOverSize(0), stringCarryOverData(0) {}
+	id(id), osmId(osmId), elev(elev)
+	{}
 	uint32_t id{std::numeric_limits<uint32_t>::max()};
 	int64_t osmId{std::numeric_limits<int64_t>::min()};
 	uint16_t elev{0};
 	uint16_t indegree{0};
 	uint16_t outdegree{0};
+#ifdef CONFIG_SUPPORT_STRING_CARRY_OVER
 	uint16_t stringCarryOverSize{0};
 	char * stringCarryOverData{nullptr}; //not zero-terminated
+#endif
 };
 
 //[source][target][weight][type][sizecarryover][carryover] //kante
@@ -43,7 +46,9 @@ struct Node {
 ///@meber weight this is usualy either the length of the arc or the travel time
 struct Edge {
 	Edge() {}
-	Edge(uint32_t source, uint32_t target, int32_t weight, int32_t type, int32_t maxspeed) : source(source), target(target), weight(weight), type(type), maxspeed(maxspeed) {}
+	Edge(uint32_t source, uint32_t target, int32_t weight, int32_t type, int32_t maxspeed) :
+	source(source), target(target), weight(weight), type(type), maxspeed(maxspeed)
+	{}
 	Edge & reverse() {
 		std::swap(source, target);
 		return *this;
@@ -53,7 +58,9 @@ struct Edge {
 	int32_t weight{0};
 	int32_t type{std::numeric_limits<int32_t>::max()};
 	int32_t maxspeed{0}; //in km/h
+#ifdef CONFIG_SUPPORT_STRING_CARRY_OVER
 	std::string carryover;
+#endif
 };
 
 struct State {

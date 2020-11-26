@@ -119,18 +119,22 @@ void FmiTextGraphWriter::writeHeader(uint64_t nodeCount, uint64_t edgeCount) {
 
 void FmiTextGraphWriter::writeNode(const osm::graphtools::creator::Node & node, const osm::graphtools::creator::Coordinates & coordinates) {
 	out() << node.id << " " << node.osmId << " " << coordinates.lat << " " << coordinates.lon << " " << node.elev;
+#ifdef CONFIG_SUPPORT_STRING_CARRY_OVER
 	if (node.stringCarryOverSize) {
 		out() << " ";
 		out().write(node.stringCarryOverData, node.stringCarryOverSize);
 	}
+#endif
 	out() << "\n";
 }
 
 void FmiTextGraphWriter::writeEdge(const Edge & e) {
 	out() << e.source << " " << e.target << " " << e.weight << " " << e.type;
+#ifdef CONFIG_SUPPORT_STRING_CARRY_OVER
 	if (e.carryover.size()) {
 		out() << " " << e.carryover;
 	}
+#endif
 	out() << "\n";
 }
 
@@ -148,9 +152,11 @@ void FmiMaxSpeedTextGraphWriter::writeHeader(uint64_t nodeCount, uint64_t edgeCo
 
 void FmiMaxSpeedTextGraphWriter::writeEdge(const Edge & e) {
 	out() << e.source << " " << e.target << " " << e.weight << " " << e.type << " " << e.maxspeed;
+#ifdef CONFIG_SUPPORT_STRING_CARRY_OVER
 	if (e.carryover.size()) {
 		out() << " " << e.carryover;
 	}
+#endif
 	out() << "\n";
 }
 
@@ -194,8 +200,12 @@ void FmiBinaryGraphWriter::writeNode(const osm::graphtools::creator::Node & node
 	putDouble(coordinates.lat);
 	putDouble(coordinates.lon);
 	putInt(node.elev);
+#ifdef CONFIG_SUPPORT_STRING_CARRY_OVER
 	putInt(node.stringCarryOverSize);
 	out().write(node.stringCarryOverData, node.stringCarryOverSize);
+#else
+	putInt(0);
+#endif
 }
 
 void FmiBinaryGraphWriter::writeEdge(const Edge & e) {
@@ -203,8 +213,12 @@ void FmiBinaryGraphWriter::writeEdge(const Edge & e) {
 	putInt(e.target);
 	putInt(e.weight);
 	putInt(e.type);
+#ifdef CONFIG_SUPPORT_STRING_CARRY_OVER
 	putInt(e.carryover.size());
 	out().write(e.carryover.c_str(), e.carryover.size());
+#else
+	putInt(0);
+#endif
 }
 
 
@@ -226,8 +240,12 @@ void FmiMaxSpeedBinaryGraphWriter::writeEdge(const Edge & e) {
 	putInt(e.weight);
 	putInt(e.type);
 	putInt(e.maxspeed);
+#ifdef CONFIG_SUPPORT_STRING_CARRY_OVER
 	putInt(e.carryover.size());
 	out().write(e.carryover.c_str(), e.carryover.size());
+#else
+	putInt(0);
+#endif
 }
 
 RamGraphWriter::RamGraphWriter(const sserialize::UByteArrayAdapter & data) : m_data(data), m_edgeBegin(0) {}
