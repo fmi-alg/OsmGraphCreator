@@ -326,7 +326,7 @@ CCGraphWriter::endGraph() {
 	pinfo.begin(m_nodes.size()+m_edges.size(), "Writing connected components");
 	for(std::size_t i(0), s(cch.size()); i < s; ++i) {
 		UFHandle ccrep = uf.find( ufh.at(nodesSortedByRep.at(nodePos)) );
-		auto nodeEdgeCount = cch.at(ccrep);
+		auto const & nodeEdgeCount = cch.at(ccrep);
 		
 		if (nodeEdgeCount.first < m_minCCSize) {
 			nodePos += nodeEdgeCount.first;
