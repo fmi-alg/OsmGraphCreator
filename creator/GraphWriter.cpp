@@ -274,6 +274,12 @@ CCGraphWriter::~CCGraphWriter()
 
 void
 CCGraphWriter::endGraph() {
+	if (m_nodes.size() > std::numeric_limits<uint32_t>::max()) {
+		throw std::runtime_error("Too many nodes to compute connected components and the header count is wrong");
+	}
+	if (m_edges.size() > std::numeric_limits<uint32_t>::max()) {
+		throw std::runtime_error("Too many edges to compute connected components and the header count is wrong");
+	}
 	std::cout << "Finding connected components" << std::endl;
 	using UnionFind = sserialize::UnionFind<uint32_t>;
 	using UFHandle = UnionFind::handle_type;
@@ -291,9 +297,9 @@ CCGraphWriter::endGraph() {
 	}
 	//Get all unique representatives
 	std::cout << "Setting node representatives" << std::endl;
-	std::unordered_map<UFHandle, std::pair<uint32_t, uint32_t>> cch; //first entry is node count second the edge count
+	std::unordered_map<UFHandle, std::pair<uint64_t, uint64_t>> cch; //first entry is node count second the edge count
 	for(std::size_t i(0), s(m_nodes.size()); i < s; ++i) {
-		cch[uf.find(ufh.at(i))] = std::pair<uint32_t, uint32_t>(0,0);
+		cch[uf.find(ufh.at(i))] = std::pair<uint64_t, uint64_t>(0,0);
 	}
 	std::cout << "Found " << cch.size() << " connected components" << std::endl;
 	//Now we have a Problem: For planet there will be thousands of connected components
@@ -309,7 +315,7 @@ CCGraphWriter::endGraph() {
 		return repa == repb ? a < b : repa < repb;
 	};
 	
-	std::cout << "Sorting nodes according to their connected component" << std::endl;
+	std::cout << "Sorting " << m_nodes.size() << " nodes according to their connected component" << std::endl;
 	std::vector<uint32_t> nodesSortedByRep(m_nodes.size());
 	for(std::size_t i(0); i < m_nodes.size(); ++i) {
 		auto nodeRep = uf.find(ufh.at(i));
@@ -320,11 +326,24 @@ CCGraphWriter::endGraph() {
 	
 	//do the same for the edges
 	//By definition the rep of source and target are the same
-	std::cout << "Sorting edges according to their connected component" << std::endl;
+	std::cout << "Sorting " << m_edges.size() << " edges according to their connected component" << std::endl;
 	std::vector<uint32_t> edgesSortedByRep(m_edges.size());
 	for(std::size_t i(0), s(m_edges.size()); i < s; ++i) {
 		cch.at(uf.find(ufh.at(m_edges.at(i).source))).second += 1;
 		edgesSortedByRep.at(i) = i;
+	}
+	{ //do consistency check
+		std::size_t nn{0}, ne{0};
+		for(auto const & x : cch) {
+			nn += x.second.first;
+			ne += x.second.second;
+		}
+		if (nn != m_nodes.size()) {
+			throw std::runtime_error("Summed node count of connected components does not match total node count");
+		}
+		if (ne != m_edges.size()) {
+			throw std::runtime_error("Summed edge count of connected components does not match total edge count");
+		}
 	}
 	std::sort(edgesSortedByRep.begin(), edgesSortedByRep.end(),
 				[&](auto && a, auto && b) -> bool {
