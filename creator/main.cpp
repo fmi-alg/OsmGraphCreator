@@ -198,6 +198,10 @@ int main(int argc, char ** argv) {
 		else if (token == "--no-reverse-edge") {
 			state->cmd.addReverseEdges = false;
 		}
+		else if (token.size() > 2 && token.at(0) == '-') {
+			std::cerr << "Unkown command: " << token << std::endl;
+			return -1;
+		}
 		else {
 			inputFileNames.emplace_back(argv[i]);
 		}
