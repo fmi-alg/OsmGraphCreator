@@ -119,7 +119,12 @@ int main(int argc, char ** argv) {
 		}
 		else if (token == "-ccs" && i+1 < argc) {
 			state->cmd.connectedComponents = true;
-			state->cmd.minCCSize = std::atoi(argv[i+1]);
+			try {
+				state->cmd.minCCSize = std::stol(argv[i+1]);
+			}
+			catch(std::invalid_argument const & e) {
+				std::cerr << "Arguments to -ccs needs to be an integer value. Got: " << argv[i+1] << std::endl;
+			}
 			++i;
 		}
 		else if (token == "-c" && i+1 < argc) {
@@ -171,7 +176,12 @@ int main(int argc, char ** argv) {
 				state->cmd.hugheHashMapPopulate = 0;
 			}
 			else {
-				state->cmd.hugheHashMapPopulate = atol(v.c_str());
+				try {
+					state->cmd.hugheHashMapPopulate = std::stol(v);
+				}
+				catch (std::invalid_argument const & e) {
+					std::cerr << "Option to -hs needs to be an integer value. Got: " << v << std::endl;
+				}
 			}
 			++i;
 		}
