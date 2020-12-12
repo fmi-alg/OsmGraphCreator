@@ -158,8 +158,11 @@ struct WayParser {
 ///Get the min/max node id
 struct MinMaxNodeIdProcessor {
 	MinMaxNodeIdProcessor() {}
+	MinMaxNodeIdProcessor(MinMaxNodeIdProcessor const &) = delete;
+	MinMaxNodeIdProcessor(MinMaxNodeIdProcessor &&) = delete;
 	sserialize::AtomicMax<int64_t> largestId;
 	sserialize::AtomicMin<int64_t> smallestId;
+	std::atomic<uint64_t> refNodeCount{0};
 	
 	std::unordered_set<std::string> kS;
 	inline const std::unordered_set<std::string> & keysToStore() const { return kS; }
@@ -170,6 +173,7 @@ struct MinMaxNodeIdProcessor {
 			largestId.update(refId);
 			smallestId.update(refId);
 		}
+		refNodeCount.fetch_add(way.refsSize(), std::memory_order_relaxed);
 	}
 };
 

@@ -330,8 +330,15 @@ int main(int argc, char ** argv) {
 				if (state->cmd.hugheHashMapPopulate > 0) {
 					largestId= std::min<uint64_t>(smallestId+state->cmd.hugheHashMapPopulate, largestId);
 				}
-				std::cout << "DirectRange=" << smallestId << ":" << largestId << std::endl;
-				state->osmIdToMyNodeId = State::OsmIdToMyNodeIdHashMap(minMaxNodeIdProcessor.smallestId.value(), largestId, sserialize::MM_SHARED_MEMORY);
+				//check if a normal map would be better.
+				//Utilization of std::unordered_map should be above 33%
+				if (largestId-smallestId < minMaxNodeIdProcessor.refNodeCount*3) { 
+					std::cout << "Direct mapped cache: range=[" << smallestId << ":" << largestId << "], max node count=" << minMaxNodeIdProcessor.refNodeCount << ", max utilization=" << double(largestId-smallestId)/minMaxNodeIdProcessor.refNodeCount << std::endl;
+					state->osmIdToMyNodeId = State::OsmIdToMyNodeIdHashMap(minMaxNodeIdProcessor.smallestId.value(), largestId, sserialize::MM_SHARED_MEMORY);
+				}
+				else {
+					std::cout << "There are not enough nodes in the data set to warrant the usage of a direct mapped cache" << std::endl;
+				}
 			}
 		
 			inFile.dataSeek(0);
