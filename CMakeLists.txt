@@ -7,6 +7,7 @@ set(CMAKE_MODULE_PATH
 )
 
 
+set(SSERIALIZE_DISABLE_DTS2 ON)
 add_subdirectory(vendor/sserialize sserialize)
 add_subdirectory(vendor/osmpbf osmpbf)
 
