@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.9)
+cmake_minimum_required(VERSION 3.16)
 project(osmgraph-tools)
 
 set(CMAKE_MODULE_PATH
