@@ -84,6 +84,7 @@ A subset of the input can be selected using the `-b' option.
 ## File Formats
 
 The `creator` supports multiple output formats which are described in the following.
+See the `readers` folder for examples.
 
 ### Text Formats
 
@@ -151,3 +152,15 @@ SOURCE_NODE_ID TARGET_NODE_ID WEIGHT TYPE MAXSPEED
 The interpretation of the `WEIGHT` depends on the selected options.
 The MAXSPEED field is in km/h.
 See the options `-dm`, `-tm` and `-t`.
+
+### Examples
+
+```bash
+# travel time as edge weight
+# edge speed from maxspeed tag
+# only roads available to cars
+# split into connected components, but drop all with less than 1024 nodes
+# use files bremen, hamburg and saarland from Geofabrik (you have to download these yourself)
+# write resulting files to compound directory
+/creator -g fmimaxspeedtext -t time -ccs 1024 -c ../../../../data/configs/car.cfg -o compound/ bremen-latest.osm.pbf hamburg-latest.osm.pbf saarland-latest.osm.pbf
+```
