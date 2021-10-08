@@ -297,7 +297,7 @@ int main(int argc, char ** argv) {
 	if (state->cmd.connectedComponents) {
 		graphWriter.reset(
 			new CCGraphWriter(
-				[&](uint32_t ccId){
+				[&](CCGraphWriter::CCId ccId){
 					return graphWriterFactory(outFileName + std::to_string(ccId) + ".cc");
 				},
 				state->cmd.minCCSize

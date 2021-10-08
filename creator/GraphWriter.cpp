@@ -321,7 +321,7 @@ void StaticGraphWriter::writeEdge(const graphtools::creator::Edge & edge) {
 #endif
 
 
-CCGraphWriter::CCGraphWriter(GraphWriterFactory factory, uint32_t minCCSize) :
+CCGraphWriter::CCGraphWriter(GraphWriterFactory factory, std::size_t minCCSize) :
 m_f(factory),
 m_minCCSize(minCCSize)
 {}
