@@ -17,6 +17,14 @@ enum OneWayStatus {OW_YES, OW_NO, OW_IMPLICIT};
 enum WeightCalculatorType {WC_NONE, WC_DISTANCE, WC_TIME, WC_MAXSPEED};
 enum GraphType {GT_NONE, GT_TOPO_TEXT, GT_FMI_TEXT, GT_FMI_BINARY, GT_FMI_MAXSPEED_BINARY, GT_FMI_MAXSPEED_TEXT, GT_SSERIALIZE_OFFSET_ARRAY, GT_PLOT, GT_SSERIALIZE_LARGE_OFFSET_ARRAY};
 
+enum class FilterMode {
+	// Write topk components ordered by their size
+	// Note that this may write more than k components if there are ties
+	TopK,
+	MinSize,
+	All
+};
+
 struct Coordinates {
 	Coordinates() {}
 	Coordinates(double lat, double lon) : lat(lat), lon(lon) {}
@@ -80,7 +88,8 @@ struct State {
 		int64_t hugheHashMapPopulate = -1;
 		bool sortedEdges = false;
 		bool connectedComponents = false;
-		uint32_t minCCSize = 0;
+		FilterMode cc_filter_mode;
+		std::size_t cc_filter_value{0};
 		bool addReverseEdges = true;
 		double distanceMult = 1; ///multiply with distance: 1000 -> distance is in mm
 		double timeMult = 100; ///multiply with time: 1000 -> time is in ms 

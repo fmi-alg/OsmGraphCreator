@@ -321,9 +321,10 @@ void StaticGraphWriter::writeEdge(const graphtools::creator::Edge & edge) {
 #endif
 
 
-CCGraphWriter::CCGraphWriter(GraphWriterFactory factory, std::size_t minCCSize) :
+CCGraphWriter::CCGraphWriter(GraphWriterFactory factory, FilterMode filter_mode, std::size_t filter_value) :
 m_f(factory),
-m_minCCSize(minCCSize)
+m_filter_mode(filter_mode),
+m_filter_value(filter_value)
 {}
 
 CCGraphWriter::~CCGraphWriter()
@@ -420,30 +421,87 @@ CCGraphWriter::endGraph() {
 					}
 				}
 	);
-	if (m_minCCSize > 0) {
-		std::size_t count = 0;
+	// contains the representatives of all CC that are written to disk
+	std::unordered_map<UFHandle, CCId> write_filter;
+	{
+		std::vector<UFHandle> cch_by_size;
+		cch_by_size.reserve(cch.size());
 		for(auto const & x : cch) {
-			count += std::size_t(x.second.first >= m_minCCSize);
+			cch_by_size.emplace_back(x.first);
 		}
-		std::cout << "Found " << count << " connected components above your threshold" << std::endl;
+		std::sort(cch_by_size.begin(), cch_by_size.end(), [&](auto a, auto b) -> bool {
+			auto const & a_s = cch.at(a);
+			auto const & b_s = cch.at(b);
+			
+			if (a_s.first == b_s.first) {
+				if (a_s.second == b_s.second) {
+					return a < b; //this is necessary since we need a strict weak order on cch_by_size
+				}
+				return a_s.second < b_s.second;
+			}
+			return a_s.first < b_s.first;
+		});
+		std::reverse(cch_by_size.begin(), cch_by_size.end());
+		//cch_by_size is sorted by size, ascending
+		CCId ccid = 0;
+		switch(m_filter_mode) {
+			case FilterMode::MinSize:
+			{
+				for(auto const & rep : cch_by_size) {
+					if (cch.at(rep).first >= m_filter_value) {
+						write_filter[rep] = ccid;
+						++ccid;
+					}
+					else {
+						break;
+					}
+				}
+				break;
+			}
+			case FilterMode::TopK:
+			{
+				auto last_size = cch.at(cch_by_size.front());
+				for(auto rep : cch_by_size) {
+					if (auto current_size = cch.at(rep); write_filter.size() < m_filter_value || current_size == last_size) {
+						last_size = current_size;
+						write_filter[rep] = ccid;
+						++ccid;
+					}
+					else {
+						break;
+					}
+				}
+				break;
+			}
+			case FilterMode::All:
+			{
+				for(auto rep : cch_by_size) {
+					write_filter[rep] = ccid;
+					++ccid;
+				}
+				break;
+			}
+		}
 	}
+	std::cout << "Found " << write_filter.size() << " connected components above your threshold" << std::endl;
+	
 
 	//now write them out
 	std::size_t nodePos{0};
 	std::size_t edgePos{0};
 	std::vector<uint32_t> nodeIdRemap(m_nodes.size()); //remaps nodeIds to cc local ids
 	sserialize::ProgressInfo pinfo;
-	std::size_t ccId = 0;
 	pinfo.begin(m_nodes.size()+m_edges.size(), "Writing connected components");
 	for(std::size_t i(0), s(cch.size()); i < s; ++i) {
 		UFHandle ccrep = uf.find( ufh.at(nodesSortedByRep.at(nodePos)) );
 		auto const & nodeEdgeCount = cch.at(ccrep);
 		
-		if (nodeEdgeCount.first < m_minCCSize) {
+		if (!write_filter.count(ccrep)) {
 			nodePos += nodeEdgeCount.first;
 			edgePos += nodeEdgeCount.second;
 			continue;
 		}
+		auto ccId = write_filter.at(ccrep);
 		
 		auto writer = m_f(ccId);
 		writer->beginGraph();
