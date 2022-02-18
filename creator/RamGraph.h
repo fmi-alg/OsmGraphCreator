@@ -86,7 +86,7 @@ struct SerializationInfo<osm::graphs::ram::Node::Coordinates> {
 	static const OffsetType length = 2*SerializationInfo<double>::length;
 	static const OffsetType max_length = 2*SerializationInfo<double>::max_length;
 	static const OffsetType min_length = 2*SerializationInfo<double>::min_length;
-	static inline OffsetType sizeInBytes(const osm::graphs::ram::Node::Coordinates & value) { return length; }
+	static inline OffsetType sizeInBytes(const osm::graphs::ram::Node::Coordinates & /*value*/) { return length; }
 };
 
 template<>
@@ -95,7 +95,7 @@ struct SerializationInfo<osm::graphs::ram::Node> {
 	static const OffsetType length = SerializationInfo<osm::graphs::ram::EdgeContainerSizeType>::length + SerializationInfo<uint16_t>::length + SerializationInfo<osm::graphs::ram::Node::Coordinates>::length;
 	static const OffsetType max_length = SerializationInfo<osm::graphs::ram::EdgeContainerSizeType>::max_length + SerializationInfo<uint16_t>::max_length + SerializationInfo<osm::graphs::ram::Node::Coordinates>::max_length;
 	static const OffsetType min_length = SerializationInfo<osm::graphs::ram::EdgeContainerSizeType>::min_length + SerializationInfo<uint16_t>::min_length + SerializationInfo<osm::graphs::ram::Node::Coordinates>::min_length;
-	static inline OffsetType sizeInBytes(const osm::graphs::ram::Node & value) { return length; }
+	static inline OffsetType sizeInBytes(const osm::graphs::ram::Node & /*value*/) { return length; }
 };
 
 template<>
@@ -104,7 +104,7 @@ struct SerializationInfo<osm::graphs::ram::Edge> {
 	static const OffsetType length = SerializationInfo<osm::graphs::ram::Edge::DestType>::length + SerializationInfo<osm::graphs::ram::Edge::WeightType>::length + SerializationInfo<osm::graphs::ram::Edge::TypeType>::length;
 	static const OffsetType max_length = SerializationInfo<osm::graphs::ram::Edge::DestType>::max_length + SerializationInfo<osm::graphs::ram::Edge::WeightType>::max_length + SerializationInfo<osm::graphs::ram::Edge::TypeType>::max_length;
 	static const OffsetType min_length = SerializationInfo<osm::graphs::ram::Edge::DestType>::min_length + SerializationInfo<osm::graphs::ram::Edge::WeightType>::min_length + SerializationInfo<osm::graphs::ram::Edge::TypeType>::min_length;
-	static inline OffsetType sizeInBytes(const osm::graphs::ram::Edge & value) { return length; }
+	static inline OffsetType sizeInBytes(const osm::graphs::ram::Edge & /*value*/) { return length; }
 };
 
 }

@@ -91,7 +91,7 @@ void TopologyTextGraphWriter::writeHeader(uint64_t nodeCount, uint64_t edgeCount
 	out() << edgeCount << "\n";
 }
 
-void TopologyTextGraphWriter::writeNode(const osm::graphtools::creator::Node & node, const osm::graphtools::creator::Coordinates & coordinates) {
+void TopologyTextGraphWriter::writeNode(const osm::graphtools::creator::Node & /*node*/, const osm::graphtools::creator::Coordinates & coordinates) {
 	out() << coordinates.lat << " " << coordinates.lon << "\n";
 }
 
@@ -561,10 +561,10 @@ CCGraphWriter::writeEdge(const graphtools::creator::Edge & edge) {
 
 PlotGraph::PlotGraph(std::shared_ptr<std::ostream> out) : m_out(out) {}
 PlotGraph::~PlotGraph() {}
-void PlotGraph::writeHeader(uint64_t nodeCount, uint64_t edgeCount) {
+void PlotGraph::writeHeader(uint64_t nodeCount, uint64_t /*edgeCount*/) {
 	m_nodes.reserve(nodeCount);
 }
-void PlotGraph::writeNode(const osm::graphtools::creator::Node & node, const osm::graphtools::creator::Coordinates & coordinates) {
+void PlotGraph::writeNode(const osm::graphtools::creator::Node & /*node*/, const osm::graphtools::creator::Coordinates & coordinates) {
 	m_nodes.emplace_back(coordinates);
 }
 void PlotGraph::writeEdge(const graphtools::creator::Edge & edge) {

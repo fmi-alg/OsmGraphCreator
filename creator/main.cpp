@@ -345,7 +345,7 @@ int main(int argc, char ** argv) {
 				}
 				//check if a normal map would be better.
 				//Utilization of std::unordered_map should be above 33%
-				if (largestId-smallestId < minMaxNodeIdProcessor.refNodeCount*3) { 
+				if (largestId-smallestId < int64_t(minMaxNodeIdProcessor.refNodeCount)*3) { 
 					std::cout << "Direct mapped cache: range=[" << smallestId << ":" << largestId << "], max node count=" << minMaxNodeIdProcessor.refNodeCount << ", max utilization=" << double(largestId-smallestId)/minMaxNodeIdProcessor.refNodeCount << std::endl;
 					state->osmIdToMyNodeId = State::OsmIdToMyNodeIdHashMap(minMaxNodeIdProcessor.smallestId.value(), largestId, sserialize::MM_SHARED_MEMORY);
 				}

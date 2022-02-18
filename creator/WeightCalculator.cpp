@@ -8,7 +8,7 @@ inline double kmh_to_ms(double kmh) {
 	return kmh*3.6;
 }
 
-int NoWeightCalculator::calc(const osm::graphtools::creator::Edge & edge) {
+int NoWeightCalculator::calc(const osm::graphtools::creator::Edge & /*edge*/) {
 	return 1;
 }
 
