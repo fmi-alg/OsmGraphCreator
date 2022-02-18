@@ -11,11 +11,54 @@
 #include "WeightCalculator.h"
 #include "MaxSpeedParser.h"
 #include <unordered_set>
+#include <sstream>
 
 
 namespace osm {
 namespace graphtools {
 namespace creator {
+
+inline std::string escape_for_json(std::string const & str) {
+	std::string result;
+	for(char const & c : str) {
+		switch(c) {
+			case '"':
+				result += "\\\"";
+				break;
+			case '\\':
+				result += "\\\\";
+				break;
+			case '\n':
+				result += "\\n";
+				break;
+			case '\t':
+				result += "\\t";
+				break;
+			case '\r':
+				result += "\\r";
+				break;
+			default:
+				result += c;
+				break;
+		}
+	}
+	return result;
+}
+
+inline std::string tags2json(osmpbf::IPrimitive const & primitive) {
+	if (!primitive.tagsSize()) {
+		return "{}";
+	}
+	std::stringstream ss;
+	char c = '{';
+	for(std::size_t i(0), s(primitive.tagsSize()); i < s; ++i) {
+		ss << c;
+		c = ',';
+		ss << '"' << escape_for_json(primitive.key(i)) << "\":\"" << escape_for_json(primitive.value(i)) << '"';
+	}
+	ss << '}';
+	return ss.str();
+}
 
 inline bool isUndirectedEdge(const std::unordered_set<int> & implicitOneWay, int ows, int hwType) {
 	if (ows == OW_YES) {
@@ -44,6 +87,9 @@ inline void gatherNodes(osmpbf::PbiStream & inFile, StatePtr state) {
 				int64_t osmId = node.id();
 				if (state->osmIdToMyNodeId.count(osmId)) {
 					Node n(nodeId, osmId, 0);
+					#ifdef CONFIG_CREATOR_COPY_TAGS
+					n.tags = tags2json(node);
+					#endif
 					state->nodes.push_back(n);
 					state->nodeCoordinates.push_back(Coordinates(node.latd(), node.lond()));
 					++nodeId;
@@ -167,7 +213,7 @@ struct MinMaxNodeIdProcessor {
 	std::unordered_set<std::string> kS;
 	inline const std::unordered_set<std::string> & keysToStore() const { return kS; }
 	
-	inline void operator()(int ows, int hwType, const std::unordered_map<std::string, std::string> & storedKv, const osmpbf::IWay & way) {
+	inline void operator()(int /*ows*/, int /*hwType*/, const std::unordered_map<std::string, std::string> & /*storedKv*/, const osmpbf::IWay & way) {
 		for(osmpbf::IWayStream::RefIterator refIt(way.refBegin()), refEnd(way.refEnd()); refIt != refEnd; ++refIt) {
 			int64_t refId = *refIt;
 			largestId.update(refId);
@@ -186,7 +232,7 @@ struct AllNodesGatherProcessor {
 	std::unordered_set<std::string> kS;
 	inline const std::unordered_set<std::string> & keysToStore() const { return kS; }
 	
-	inline void operator()(int ows, int hwType, const std::unordered_map<std::string, std::string> & storedKv, const osmpbf::IWay & way) {
+	inline void operator()(int /*ows*/, int /*hwType*/, const std::unordered_map<std::string, std::string> & /*storedKv*/, const osmpbf::IWay & way) {
 		for(osmpbf::IWayStream::RefIterator refIt(way.refBegin()), refEnd(way.refEnd()); refIt != refEnd; ++refIt) {
 			state->osmIdToMyNodeId.mark(*refIt);
 		}
@@ -203,7 +249,7 @@ struct NodeRefGatherProcessor {
 	std::unordered_set<std::string> kS;
 	inline const std::unordered_set<std::string> & keysToStore() const { return kS; }
 	
-	inline void operator()(int ows, int hwType, const std::unordered_map<std::string, std::string> & storedKv, const osmpbf::IWay & way) {
+	inline void operator()(int ows, int hwType, const std::unordered_map<std::string, std::string> & /*storedKv*/, const osmpbf::IWay & way) {
 		if (state->invalidWays.count(way.id())) { //check if way is valid
 			return;
 		}
@@ -230,7 +276,7 @@ struct InvalidWayMarkingProcessor {
 	std::unordered_set<std::string> kS;
 	inline const std::unordered_set<std::string> & keysToStore() const { return kS; }
 	
-	inline void operator()(int ows, int hwType, const std::unordered_map<std::string, std::string> & storedKv, const osmpbf::IWay & way) {
+	inline void operator()(int /*ows*/, int /*hwType*/, const std::unordered_map<std::string, std::string> & /*storedKv*/, const osmpbf::IWay & way) {
 		for(osmpbf::IWayStream::RefIterator refIt(way.refBegin()), refEnd(way.refEnd()); refIt != refEnd; ++refIt) {
 			if (state->osmIdToMyNodeId.count(*refIt)) {
 				state->invalidWays.insert(way.id());
@@ -249,7 +295,7 @@ struct NodeDegreeProcessor {
 	std::unordered_set<std::string> kS;
 	inline const std::unordered_set<std::string> & keysToStore() const { return kS; }
 	
-	inline void operator()(int ows, int hwType, const std::unordered_map<std::string, std::string> & storedKv, const osmpbf::IWay & way) {
+	inline void operator()(int ows, int hwType, const std::unordered_map<std::string, std::string> & /*storedKv*/, const osmpbf::IWay & way) {
 		if (state->invalidWays.count(way.id()) == 0) {
 			bool undirectEdge = isUndirectedEdge(state->cfg.implicitOneWay, ows, hwType);
 			osmpbf::IWayStream::RefIterator refSrc(way.refBegin());
@@ -293,11 +339,17 @@ struct FinalWayProcessor {
 			if (!storedKv.count("maxspeed") || !parseMaxSpeed(storedKv.at("maxspeed"), maxSpeed)) {
 				maxSpeed = state->cfg.maxSpeedFromType(hwType);
 			}
+			#ifdef CONFIG_CREATOR_COPY_TAGS
+			std::string tags = tags2json(way);
+			#endif
 			osmpbf::IWayStream::RefIterator refSrc(way.refBegin());
 			osmpbf::IWayStream::RefIterator refTg(way.refBegin()); ++refTg;
 			osmpbf::IWayStream::RefIterator refEnd(way.refEnd());
 			for(; refTg != refEnd; ++refTg, ++refSrc) {
 				Edge e(state->osmIdToMyNodeId.at(*refSrc), state->osmIdToMyNodeId.at(*refTg), 1, hwType, maxSpeed);
+				#ifdef CONFIG_CREATOR_COPY_TAGS
+				e.tags = tags;
+				#endif
 				e.weight = weightCalculator->calc(e);
 				graphWriter->writeEdge(e);
 				if (state->cmd.addReverseEdges && isUndirectedEdge(state->cfg.implicitOneWay, ows, hwType)) {

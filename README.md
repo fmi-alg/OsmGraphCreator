@@ -26,9 +26,11 @@ git clone --recursive <url>
 ```bash
     mkdir build
     cd build
-    cmake ../
+    cmake -DCONFIG_CREATOR_COPY_TAGS=OFF ../
     make
 ```
+
+Set `CONFIG_CREATOR_COPY_TAGS=ON` to get tags for each node and edge in the `stringCarryOver` field.
 
 ### Docker
 
@@ -117,15 +119,15 @@ The `fmitext` graph is of type `standard`.
 **Node format**:
 
 ```text
-NODE_ID OSM_ID LAT LON ELEVATION
-<uint32_t> <int64_t> <double> <double> <uint16_t>
+NODE_ID OSM_ID LAT LON ELEVATION [TAGS]
+<uint32_t> <int64_t> <double> <double> <uint16_t> [<JSON>]
 ```
 
 **Edge format**:
 
 ```text
-SOURCE_NODE_ID TARGET_NODE_ID WEIGHT TYPE
-<uint32_t> <uint32_t> <int32_t> <int32_t>
+SOURCE_NODE_ID TARGET_NODE_ID WEIGHT TYPE [TAGS]
+<uint32_t> <uint32_t> <int32_t> <int32_t> [<JSON>]
 ```
 
 The interpretation of the `WEIGHT` depends on the selected options.
@@ -138,15 +140,15 @@ The `fmimaxspeedtext` graph is of type `maxspeed`.
 **Node format**:
 
 ```text
-NODE_ID OSM_ID LAT LON ELEVATION
-<uint32_t> <int64_t> <double> <double> <uint16_t>
+NODE_ID OSM_ID LAT LON ELEVATION [TAG_STRING_SIZE TAG_STRING]
+<uint32_t> <int64_t> <double> <double> <uint16_t> [<uint16_t> <CHARS>]
 ```
 
 **Edge format**:
 
 ```text
-SOURCE_NODE_ID TARGET_NODE_ID WEIGHT TYPE MAXSPEED
-<uint32_t> <uint32_t> <int32_t> <int32_t> <int32_t>
+SOURCE_NODE_ID TARGET_NODE_ID WEIGHT TYPE MAXSPEED [TAG_STRING_SIZE TAG_STRING]
+<uint32_t> <uint32_t> <int32_t> <int32_t> <int32_t> [<uint16_t> <CHARS>]
 ```
 
 The interpretation of the `WEIGHT` depends on the selected options.

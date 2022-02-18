@@ -119,23 +119,18 @@ void FmiTextGraphWriter::writeHeader(uint64_t nodeCount, uint64_t edgeCount) {
 
 void FmiTextGraphWriter::writeNode(const osm::graphtools::creator::Node & node, const osm::graphtools::creator::Coordinates & coordinates) {
 	out() << node.id << " " << node.osmId << " " << coordinates.lat << " " << coordinates.lon << " " << node.elev;
-#ifdef CONFIG_SUPPORT_STRING_CARRY_OVER
-	if (node.stringCarryOverSize) {
-		out() << " ";
-		out().write(node.stringCarryOverData, node.stringCarryOverSize);
-	}
+#ifdef CONFIG_CREATOR_COPY_TAGS
+		out() << " " << node.tags;
 #endif
-	out() << "\n";
+	out() << '\n';
 }
 
 void FmiTextGraphWriter::writeEdge(const Edge & e) {
 	out() << e.source << " " << e.target << " " << e.weight << " " << e.type;
-#ifdef CONFIG_SUPPORT_STRING_CARRY_OVER
-	if (e.carryover.size()) {
-		out() << " " << e.carryover;
-	}
+#ifdef CONFIG_CREATOR_COPY_TAGS
+	out() << " " << e.tags;
 #endif
-	out() << "\n";
+	out() << '\n';
 }
 
 FmiMaxSpeedTextGraphWriter::FmiMaxSpeedTextGraphWriter(std::shared_ptr<std::ostream> out) : FmiTextGraphWriter(out) {}
@@ -152,10 +147,8 @@ void FmiMaxSpeedTextGraphWriter::writeHeader(uint64_t nodeCount, uint64_t edgeCo
 
 void FmiMaxSpeedTextGraphWriter::writeEdge(const Edge & e) {
 	out() << e.source << " " << e.target << " " << e.weight << " " << e.type << " " << e.maxspeed;
-#ifdef CONFIG_SUPPORT_STRING_CARRY_OVER
-	if (e.carryover.size()) {
-		out() << " " << e.carryover;
-	}
+#ifdef CONFIG_CREATOR_COPY_TAGS
+	out() << " " << e.tags;
 #endif
 	out() << "\n";
 }
@@ -200,9 +193,9 @@ void FmiBinaryGraphWriter::writeNode(const osm::graphtools::creator::Node & node
 	putDouble(coordinates.lat);
 	putDouble(coordinates.lon);
 	putInt(node.elev);
-#ifdef CONFIG_SUPPORT_STRING_CARRY_OVER
-	putInt(node.stringCarryOverSize);
-	out().write(node.stringCarryOverData, node.stringCarryOverSize);
+#ifdef CONFIG_CREATOR_COPY_TAGS
+	putInt(node.tags.size());
+	out().write(node.tags.c_str(), node.tags.size());
 #else
 	putInt(0);
 #endif
@@ -213,9 +206,9 @@ void FmiBinaryGraphWriter::writeEdge(const Edge & e) {
 	putInt(e.target);
 	putInt(e.weight);
 	putInt(e.type);
-#ifdef CONFIG_SUPPORT_STRING_CARRY_OVER
-	putInt(e.carryover.size());
-	out().write(e.carryover.c_str(), e.carryover.size());
+#ifdef CONFIG_CREATOR_COPY_TAGS
+	putInt(e.tags.size());
+	out().write(e.tags.c_str(), e.tags.size());
 #else
 	putInt(0);
 #endif
@@ -240,9 +233,9 @@ void FmiMaxSpeedBinaryGraphWriter::writeEdge(const Edge & e) {
 	putInt(e.weight);
 	putInt(e.type);
 	putInt(e.maxspeed);
-#ifdef CONFIG_SUPPORT_STRING_CARRY_OVER
-	putInt(e.carryover.size());
-	out().write(e.carryover.c_str(), e.carryover.size());
+#ifdef CONFIG_CREATOR_COPY_TAGS
+	putInt(e.tags.size());
+	out().write(e.tags.c_str(), e.tags.size());
 #else
 	putInt(0);
 #endif

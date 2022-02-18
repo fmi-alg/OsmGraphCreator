@@ -45,9 +45,8 @@ struct Node {
 	uint16_t indegree{0};
 	uint16_t outdegree{0};
 #endif
-#ifdef CONFIG_SUPPORT_STRING_CARRY_OVER
-	uint16_t stringCarryOverSize{0};
-	char * stringCarryOverData{nullptr}; //not zero-terminated
+#ifdef CONFIG_CREATOR_COPY_TAGS
+	std::string tags;
 #endif
 };
 
@@ -68,8 +67,8 @@ struct Edge {
 	int32_t weight{0};
 	int32_t type{std::numeric_limits<int32_t>::max()};
 	int32_t maxspeed{0}; //in km/h
-#ifdef CONFIG_SUPPORT_STRING_CARRY_OVER
-	std::string carryover;
+#ifdef CONFIG_CREATOR_COPY_TAGS
+	std::string tags;
 #endif
 };
 
