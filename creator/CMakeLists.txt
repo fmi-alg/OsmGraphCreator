@@ -24,7 +24,6 @@ set(SOURCES_CPP
 	RamGraph.cpp
 )
 
-set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
 add_executable(${PROJECT_NAME} ${SOURCES_CPP})
 target_link_libraries(${PROJECT_NAME} ${LINK_LIBS})
 target_include_directories(${PROJECT_NAME} PRIVATE ${ZLIB_INCLUDE_DIRS} ${CMAKE_CURRENT_SOURCE_DIR})

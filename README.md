@@ -26,11 +26,12 @@ git clone --recursive <url>
 ```bash
     mkdir build
     cd build
-    cmake -DCONFIG_CREATOR_COPY_TAGS=OFF ../
+    cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INTERPROCEDURAL_OPTIMIZATION=TRUE -DCONFIG_CREATOR_COPY_TAGS=OFF ../
     make
 ```
 
 Set `CONFIG_CREATOR_COPY_TAGS=ON` to get tags for each node and edge in the `stringCarryOver` field.
+The format is the same as the `tag` key defined in by the [Overpass-Turbo-JSON](http://overpass-api.de/output_formats.html#json).
 
 ### Docker
 
