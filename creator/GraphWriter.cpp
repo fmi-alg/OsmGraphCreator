@@ -83,6 +83,7 @@ DropGraphWriter::endGraph() {
 	}
 }
 
+//BEGIN TopologyTextGraphWriter
 TopologyTextGraphWriter::TopologyTextGraphWriter(std::shared_ptr<std::ostream> out) :  m_out(out) {}
 TopologyTextGraphWriter::~TopologyTextGraphWriter(){}
 
@@ -98,6 +99,39 @@ void TopologyTextGraphWriter::writeNode(const osm::graphtools::creator::Node & /
 void TopologyTextGraphWriter::writeEdge(const Edge & e) {
 	out() << e.source << " " << e.target << "\n";
 }
+//END TopologyTextGraphWriter
+//BEGIN TopologyBinaryGraphWriter
+TopologyBinaryGraphWriter::TopologyBinaryGraphWriter(std::shared_ptr<std::ostream> out) :  m_out(out) {}
+TopologyBinaryGraphWriter::~TopologyBinaryGraphWriter(){}
+
+void TopologyBinaryGraphWriter::putUnsignedLong(uint64_t v) {
+	v = htole64(v);
+	char tmp[sizeof(v)];
+	memcpy(tmp, &v, sizeof(v));
+	out().write(tmp, sizeof(v));
+}
+
+void TopologyBinaryGraphWriter::putDouble(double v) {
+	char tmp[sizeof(v)];
+	memcpy(tmp, &v, sizeof(v));
+	out().write(tmp, sizeof(v));
+}
+
+void TopologyBinaryGraphWriter::writeHeader(uint64_t nodeCount, uint64_t edgeCount) {
+	putUnsignedLong(nodeCount);
+	putUnsignedLong(edgeCount);
+}
+
+void TopologyBinaryGraphWriter::writeNode(const osm::graphtools::creator::Node & /*node*/, const osm::graphtools::creator::Coordinates & coordinates) {
+	putDouble(coordinates.lat);
+	putDouble(coordinates.lon);
+}
+
+void TopologyBinaryGraphWriter::writeEdge(const Edge & e) {
+	putUnsignedLong(e.source);
+	putUnsignedLong(e.target);
+}
+//END TopologyTextGraphWriter
 
 // # Id : [hexstring]
 // # Timestamp : [int]

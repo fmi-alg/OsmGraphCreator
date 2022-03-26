@@ -76,6 +76,31 @@ public:
 	virtual void writeEdge(const Edge & edge);
 };
 
+/**
+ * Writes nodes and edges in binary format in little endian:
+ * struct Format {
+ *   uint64_t numNodes;
+ *   uint64_t numEdges;
+ *   array<pair<double, double>> nodes(numNodes);
+ *   array<pair<uint64_t, uint64_t>> edges(numEdges);
+ * };
+ * 
+ */
+class TopologyBinaryGraphWriter: public GraphWriter {
+private:
+	std::shared_ptr<std::ostream> m_out;
+protected:
+	inline std::ostream & out() { return *m_out; }
+	void putUnsignedLong(uint64_t v);
+	void putDouble(double v);
+public:
+	TopologyBinaryGraphWriter(std::shared_ptr<std::ostream> out);
+	virtual ~TopologyBinaryGraphWriter();
+	virtual void writeHeader(uint64_t nodeCount, uint64_t edgeCount);
+	virtual void writeNode(const Node & node, const Coordinates & coordinates);
+	virtual void writeEdge(const Edge & edge);
+};
+
 class FmiTextGraphWriter: public GraphWriter {
 private:
 	std::shared_ptr<std::ostream> m_out;

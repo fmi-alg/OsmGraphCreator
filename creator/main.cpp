@@ -52,9 +52,10 @@ void help() {
 	std::cout << "USAGE: -g <opts> -t <opts> -dm <number> -tm <number> -c <config> -o <outfile> <infiles>" << std::endl;
 	std::cout << "where \n"
 	"-g selects the output type\n"
-	"\t options are (topotext|fmitext|fmibinary|fmimaxspeedtext|fmimaxspeedbinary|sserializeoffsetarray|sserializelargeoffsetarray|plot|drop)\n"
+	"\t options are (topotext|topobinary|fmitext|fmibinary|fmimaxspeedtext|fmimaxspeedbinary|sserializeoffsetarray|sserializelargeoffsetarray|plot|drop)\n"
 	"\tfmi(maxspeed)(text|binary) is specified by https://theogit.fmi.uni-stuttgart.de/hartmafk/fmigraph/wikis/types \n"
 	"\ttopotext only has the topology. Format is obvious.\n"
+	"\ttopobinary only has the topology. Format is obvious with counts encoded as uint64_t and coordinates in double.\n"
 	"\tplot can be used to plot the graph with gnuplot\n"
 	"-t selects the cost function of edges\n"
 	"\tdistance calculates the distance in [m/<-dm>] \n"
@@ -151,6 +152,9 @@ int main(int argc, char ** argv) {
 			std::string gtS(argv[i+1]);
 			if (gtS == "topotext") {
 				state->cmd.graphType = GT_TOPO_TEXT;
+			}
+			else if (gtS == "topobinary") {
+				state->cmd.graphType = GT_TOPO_BINARY;
 			}
 			else if  (gtS ==  "fmitext") {
 				state->cmd.graphType = GT_FMI_TEXT;
@@ -266,6 +270,9 @@ int main(int argc, char ** argv) {
 		switch (state->cmd.graphType) {
 		case GT_TOPO_TEXT:
 			graphWriter.reset(new TopologyTextGraphWriter(outFile));
+			break;
+		case GT_TOPO_BINARY:
+			graphWriter.reset(new TopologyBinaryGraphWriter(outFile));
 			break;
 		case GT_FMI_BINARY:
 			graphWriter.reset(new FmiBinaryGraphWriter(outFile));
